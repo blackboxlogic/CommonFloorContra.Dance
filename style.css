@@ -1,3 +1,11 @@
+@media (prefers-color-scheme: light) {
+	body {
+		background: SeaShell;
+		color: black;
+		width: 100%;
+	}
+}
+
 @media (prefers-color-scheme: dark) {
 	body {
 		background: #000;
