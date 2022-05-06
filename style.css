@@ -2,7 +2,9 @@
 	body {
 		background: SeaShell;
 		color: black;
-		overflow-x: hidden
+		overflow-x: hidden;
+		margin: 0;
+		padding: 8px;
 	}
 }
 
@@ -10,7 +12,9 @@
 	body {
 		background: #000;
 		color: white;
-		overflow-x: hidden
+		overflow-x: hidden;
+		margin: 0;
+		padding: 8px;
 	}
 	a:link {
 		color: #00ff00;
