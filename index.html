@@ -17,14 +17,14 @@
 		<p>
 		Calling by:
 		<ul>
-		  <li>Hannah Chamberlain</li>
-		  <li>Ellen Hodgkin</li>
+			<li>Hannah Chamberlain</li>
+			<li>Ellen Hodgkin</li>
 		</ul>
 		Music by:
 		<ul>
-		  <li>John Pranio (fiddle)</li>
-		  <li>Bethany Waickman (guitar)</li>
-		  <li>Glen Loper (mandolin)</li>
+			<li>John Pranio (fiddle)</li>
+			<li>Bethany Waickman (guitar)</li>
+			<li>Glen Loper (mandolin)</li>
 		</ul>
 		Beginner lesson at 7pm
 		<p>
@@ -46,8 +46,20 @@
 		<p>
 		For questions or to sign up for future dance reminders, email <a href="mailto:CommonFloorContraDance@gmail.com">CommonFloorContraDance@gmail.com</a>
 		<p>
-		<embed src="May%2015%20Flyer.pdf#zoom=50" width="50%" height="610vh" type="application/pdf">
+		<div id="flyerLoader"></div>
 		<p>
 		Site by Alex, all typos are his
+
+		<script>
+			if (!('connection' in navigator) || navigator.connection.saveData !== true) {
+				var flyerLoader = document.getElementById("flyerLoader");
+				var flyer = document.createElement('embed');
+				flyer.setAttribute('src', 'May%2015%20Flyer.pdf#zoom=50');
+				flyer.setAttribute('width', '50%');
+				flyer.setAttribute('height', '610vh');
+				flyer.setAttribute('type', 'application/pdf');
+				flyerLoader.appendChild(flyer);
+			}
+		</script>
 	</body>
 </html>
