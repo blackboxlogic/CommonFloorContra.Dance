@@ -1,0 +1,4 @@
+# What did you just crawl me?
+User-agent: *
+Disallow:
+Sitemap: https://www.commonfloorcontra.dance/sitemap.xml
