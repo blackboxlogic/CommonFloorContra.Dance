@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Volunteer | Common Floor Contra Dance</title>
+		<meta content="utf-8" http-equiv="encoding">
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="keywords" content="common floor contra dance volunteer">
+		<link rel="icon" type="image/x-icon" href="logo.png">
+		<link rel="stylesheet" type="text/css" href="style.css" media="screen"/>
+		<link rel="canonical" href="http://www.commonfloorcontra.dance/volunteer" media="screen"/>
+	</head>
+	<body>
+		<a href="/">❰ Home</a>
+
+		<h1 id="volunteering">Volunteering</h1>
+		This event can't run without volunteers. Please email <a href="mailto:CommonFloorContraDance@gmail.com">CommonFloorContraDance@gmail.com</a> to volunteer for the dance and indicate which role(s) you're interested in. Volunteering gets you free entry and a warm fuzzy feeling.
+		<p>
+		<h3>Positions:</h3>
+		<ul>
+			<li>Setup 6:30-7 (2 helpers: furniture, fans, signs)</li>
+			<li>Door shift A 6:45-7:45 (4 helpers: check vax/masks/CoC, shoes, money, stamp)</li>
+			<li>Door shift B 7:45-8:30 (2 helpers: same as above)</li>
+			<li>Door shift C 8:30-9:15 (1 helper: same as above)</li>
+			<li>Takedown 10-10:15 (2+ helpers: furniture, fans, signs)</li>
+		</ul>
+		
+		<footer>
+		<script>
+			document.write("Last modified on " + document.lastModified);
+		</script>
+		</footer>
+	</body>
+</html>
