@@ -16,6 +16,14 @@ li {
 	}
 }
 
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background: SeaShell;
+		color: black;
+	}
+}
+
 /* @media (prefers-color-scheme: dark) {
 	body {
 		background: #000;
