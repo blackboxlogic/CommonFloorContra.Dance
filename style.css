@@ -1,12 +1,13 @@
 body {
 	overflow-x: hidden;
 	margin: 0px;
-	padding: 8px;
+/* 	padding: 8px; */
 }
 
+/* 
 li {
 	margin: 8px;
-}
+} */
 
 @media (prefers-color-scheme: light) {
 	body {
@@ -15,7 +16,7 @@ li {
 	}
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
 	body {
 		background: #000;
 		color: white;
@@ -38,4 +39,4 @@ li {
 		background-color: transparent;
 		text-decoration: underline;
 	}
-}
+} */
