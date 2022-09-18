@@ -12,47 +12,94 @@
 
 <!-- https://schema.pythonanywhere.com/DanceEvent -->
 <!-- https://validator.schema.org/ -->
+ 
+ < script type = "application/ld+json" > {
+	"@type": "WebSite",
+	"url": "https://www.commonfloorcontra.dance",
+	"name": "Common Floor Contra Dance",
+	"keywords":"contra,dance,contradance,Portland,Maine",
+	"logo":"https://www.commonfloorcontra.dance/logo.png",
+	"image":"https://www.commonfloorcontra.dance/logo.png",
+	"@context": "http://schema.org"
+}
+<  / script > 
+		
+<script type="application/ld+json">
+{
+	"@type": "Organization",
+	"name":"Common Floor Contra Dance",
+	"url":"https://www.commongfloorcontra.dance",
+	"email":"commonfloorcontra@gmail.com",
+	"keywords":"contra,dance,contradance,Portland,Maine",
+	"description":"Organizing monthly contra dances in Portland, Maine",
+	"logo":"https://www.commonfloorcontra.dance/logo.png",
+	"image":"https://www.commonfloorcontra.dance/logo.png",
+	"sameAs":"https://www.commongfloorcontra.dance",
+	"location": {
+		"@type":"Place",
+		"address": {
+			"@type":"PostalAddress",
+			"addressLocality":"Portland",
+			"addressRegion":"ME",
+			"postalCode":"04103",
+			"streetAddress":"400 Deering Avenue",
+			"@context": "http://schema.org"
+		},
+		"name":"Temple Beth El",
+		"url":"https://www.tbemaine.org/",
+		"@context": "http://schema.org",
+	},
+	"@context": "http://schema.org"
+}
+</script>
+		
 <script type="application/ld+json">
 {
 	"@context": "http://schema.org/",
 	"@type": "DanceEvent",
-		"description":"A halloween themed contra dance in Portland",
-		"endDate":"2022-10-30T22:00:00",
-		"inLanguage":"English",
-		"keywords":"contra,dance,contradance,portland,maine,halloween",
-		"location": {
-			"@type":"Place",
-			"address": {
-				"@type":"PostalAddress",
-				"addressLocality":"Portland",
-				"addressRegion":"ME",
-				"postalCode":"04103",
-				"streetAddress":"400 Deering Avenue"
-			},
-			"name":"Temple Beth El",
-			"url":"https://www.tbemaine.org/"
+	"description":"A halloween themed contra dance in Portland",
+	"endDate":"2022-10-30T22:00:00",
+	"image":"https://www.commonfloorcontra.dance/logo.png",
+	"inLanguage":"English",
+	"keywords":"contra,dance,contradance,portland,maine,halloween",
+	"location": {
+		"@type":"Place",
+		"address": {
+			"@type":"PostalAddress",
+			"addressLocality":"Portland",
+			"addressRegion":"ME",
+			"postalCode":"04103",
+			"streetAddress":"400 Deering Avenue",
+			"@context": "http://schema.org"
 		},
-		"name":"Portland Contra Dance",
-		"offers": [{
-			"@type": "Offer",
-			"price": "10.00",
-			"priceCurrency": "USD"
-    		},{
-			"@type": "Offer",
-			"price": "20.00",
-			"priceCurrency": "USD"
-    		}],
-		"organizer":"Common Floor Contra Dance",
-		"performer": [{
-			"@type": "Person",
-			"hasOccupation":"Caller",
-			"name":"TBD"
-		},{
-			"@type": "MusicGroup",
-			"name":"TBD"
-		}],
-		"startDate":"2022-10-30T19:00:00",
-		"url":"https://www.CommonFloorContra.Dance"
+		"name":"Temple Beth El",
+		"url":"https://www.tbemaine.org/",
+		"@context": "http://schema.org",
+	},
+	"name":"Portland Contra Dance",
+	"organizer": {
+		"@type": "Organization",
+		"name":"Common Floor Contra Dance",
+		"url":"https://www.commongfloorcontra.dance",
+		"email":"commonfloorcontra@gmail.com",
+		"keywords":"contra, dance, contradance, Portland, Maine",
+		"description":"Organizing monthly contra dances in Portland, Maine",
+		"image":"https://www.commonfloorcontra.dance/logo.png",
+		"sameAs":"https://www.commongfloorcontra.dance",
+		"@context": "http://schema.org"
+	},
+	"performer": [{
+		"@type": "Person",
+		"hasOccupation":"Caller",
+		"name":"TBD",
+		"@context": "http://schema.org"
+	},{
+		"@type": "MusicGroup",
+		"name":"TBD",
+		"@context": "http://schema.org"
+	}],
+	"startDate":"2022-10-30T19:00:00",
+	"url":"https://www.CommonFloorContra.Dance"
 }
 </script>
 
