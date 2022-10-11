@@ -10,6 +10,15 @@ body {
 	height: 100%;
 }
 
+.menu {
+	display:flex;
+	flex-wrap:wrap
+}
+
+.menuItem {
+	margin:5px
+}
+
 @media (prefers-color-scheme: light) {
 	body {
 		background: SeaShell;
