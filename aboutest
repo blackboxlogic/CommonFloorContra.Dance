@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta content="utf-8" http-equiv="encoding">
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" type="text/css" href="style.css" media="screen"/>
+	</head>
+	<body>
+		<div>
+			<a href="/">❰ Home</a>
+		</div>
+		<iframe src="https://proxybyregex.azurewebsites.net/api/ProxyByRegex?url=https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true"
+			frameborder=0 style='height: 100%; width: 100%'>
+		</iframe>
+	</body>
+</html>
