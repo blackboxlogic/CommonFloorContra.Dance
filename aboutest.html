@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>About | Common Floor Contra Dance</title>
+		<meta content="utf-8" http-equiv="encoding">
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="keywords" content="common floor contra dance about">
+		<link rel="icon" type="image/x-icon" href="logo.png">
+		<link rel="stylesheet" type="text/css" href="style.css" media="screen"/>
+		<link rel="canonical" href="https://www.commonfloorcontra.dance/about" media="screen"/>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    
+    <style>
+      body { margin: 0; padding: 0; }
+      iframe { margin-left: 2vw; margin-top: 2vh; height: 90vh; width: 90vw; }
+    </style>
+    
+	</head>
+	<body>
+		<!--<div>
+			<a href="/">❰ Home</a>
+		</div>-->
+		<!--<iframe src="https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true"
+			frameborder=0 style='height: 100%; width: 100%'>
+		</iframe>-->
+    <iframe srcdoc="" frameborder="0" scrolling="no"></iframe>
+
+
+
+
+<script>
+    $(function() {
+        $.get("https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true", function(html) {
+            var contents = $("iframe").contents();
+
+            contents.find("html").html(html);
+
+            //setTimeout(function() {
+            //    contents.find('a[href^="http://"]').attr("target", "_blank");
+            //    contents.find('a[href^="https://"]').attr("target", "_blank");
+            //}, 1000); // Actually not sure if timeout is required here...
+        });
+    });
+</script>
+    
+	</body>
+</html>
