@@ -34,7 +34,7 @@
     $(function() {
         $.get("https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true", function(html) {
             var contents = $("iframe").contents();
-	    html.Replace("window.top", "false");
+	    html = html.replace("window.top", "false");
             contents.find("html").html(html);
 
             //setTimeout(function() {
