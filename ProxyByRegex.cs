@@ -11,6 +11,9 @@ public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogge
     html = BaseTargetTop(html);
     html = RunRegexRemove(html, d.Get("regex") ?? GoogleRedirect);
     var response = req.CreateResponse(HttpStatusCode.OK);
+
+    //response.Headers.Add("cache-control", "public, max-age=1800"); // half hour
+    
     response.Content = new StringContent(html, Encoding.UTF8, "text/html");
 
     return response;
