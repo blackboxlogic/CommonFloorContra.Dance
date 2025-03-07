@@ -12,6 +12,7 @@ using System.Net;
 using Ical.Net;
 using System.Linq;
 using System.Net.Mime;
+using Ical.Net.CalendarComponents;
 
 namespace ProxyByRegex
 {
@@ -29,6 +30,7 @@ namespace ProxyByRegex
 		{
 			using (HttpClient client = new HttpClient())
 			{
+				//req.Headers["Accepted"]
 				client.DefaultRequestHeaders.Add("Accept", @"*/*");
 				using (HttpResponseMessage remoteResponse = await client.GetAsync(req.Query["url"]))
 				using (HttpContent remoteContent = remoteResponse.Content)
@@ -38,7 +40,7 @@ namespace ProxyByRegex
 					if (req.Query["url"].ToString().StartsWith(@"https://docs.google.com/document"))
 					{
 						remoteContentString = new Regex(GoogleRedirect).Replace(remoteContentString, "");
-						remoteContentString = remoteContentString.Replace("<head>", "<head><base target=\"_top\">"); // I forget why?
+						//remoteContentString = remoteContentString.Replace("<head>", "<head><base target=\"_top\">"); // I forget why?
 					}
 					else
 					{
@@ -48,7 +50,7 @@ namespace ProxyByRegex
 					var proxyResponse = new ContentResult
 					{
 						Content = remoteContentString,
-						ContentType = remoteContent.Headers.ContentType.MediaType,
+						ContentType = remoteContent.Headers.ContentType.ToString(),
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
@@ -72,12 +74,20 @@ namespace ProxyByRegex
 				{
 					var remoteContentString = await remoteContent.ReadAsStringAsync();
 					var cal = Calendar.Load(remoteContentString);
-					var nextEvent = cal.Events.OrderBy(e => e.Start).FirstOrDefault(e => e.Start.AsDateTimeOffset > DateTimeOffset.Now);
+
+					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now, DateTime.Now.AddYears(1));
+					var nextEvent = events.OrderBy(e => e.Period.StartTime).FirstOrDefault()?.Source as CalendarEvent;
+					var description = "<span>no upcoming events found :(</span>";
+
+					if (nextEvent != null)
+					{
+						description = $"<h1>{nextEvent.Summary}</h1><p><h2>{nextEvent.Start.Date.ToString("dddd, MMMM dd")}</h2>{nextEvent.Description}";
+					}
 
 					var proxyResponse = new ContentResult
 					{
-						Content = nextEvent?.Description ?? "<span>no upcoming events found :(</span>",
-						ContentType = "text/html",
+						Content = description,
+						ContentType = "text/html; charset=utf-8",
 						StatusCode = (int)HttpStatusCode.OK
 					};
 

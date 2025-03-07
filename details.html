@@ -17,28 +17,28 @@
 			<a href="/">❰ Home</a>
 		</div>
 
-		<div id="calendar">Loading...</div>
+		<iframe src="http://localhost:7024/api/Proxy?url=https://docs.google.com/document/d/e/2PACX-1vSz9cH1aF427AoqqOU56kdjFRR-FMkQFTVGlQGcgKoeXHYTE_CKi52BYPYymqHA3wVzgsdz27CC44XA/pub?embedded=true"
+			frameborder=0 style='height: 100%; width: 100%'>
+		</iframe>
+
+		<div style="padding:20px" id="nextEventDiv">Loading next event...</div>
 
 		<script>
 			async function fetchCalendar() {
 				try {
-					const response = await fetch('https://icalprocessor.azurewebsites.net/api/GetNext/commonfloorcontradance@gmail.com?format=html');
+					const response = await fetch('http://localhost:7024/api/GetNextEvent?url=https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics');
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 					const data = await response.text();
-					document.getElementById('calendar').innerHTML = data;
+					document.getElementById('nextEventDiv').innerHTML = data;
 				} catch (error) {
 					console.error('Error fetching calendar:', error);
-					document.getElementById('calendar').innerHTML = 'Failed to load calendar.';
+					document.getElementById('nextEventDiv').innerHTML = 'Failed to load next event :(';
 				}
 			}
-
 			fetchCalendar();
 		</script>
 
-		<iframe src="https://proxybyregex.azurewebsites.net/api/ProxyByRegex?url=https://docs.google.com/document/d/e/2PACX-1vT--0Z4koUida-BYCpUu9DSJJkQitEmlbh8LQAVL6Ggw2MoC2tVdz3roKJeR6PsWhnQTeqrg7jj_Knw/pub?embedded=true"
-			frameborder=0 style='height: 100%; width: 100%'>
-		</iframe>
 	</body>
 </html>
