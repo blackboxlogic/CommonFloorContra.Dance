@@ -13,8 +13,26 @@
 		<script data-goatcounter="https://cfcd.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 	</head>
 	<body>
-		<iframe src="https://proxybyregex.azurewebsites.net/api/ProxyByRegex?url=https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true"
-			frameborder=0 style='height: 100%; width: 100%'>
-		</iframe>
+		<div style="padding:20px" data-source="https://icalprocessor.azurewebsites.net/api/Proxy?url=https://docs.google.com/document/d/e/2PACX-1vT2ieV9D_EyVUSk8FZQyKIQRl-1S6trFaN_JcAHJ2_tvftFXiBjEkIhPF_RSrRnKBPZaYIayZRdgzPN/pub?embedded=true">Loading...
+		</div>
+		
+		<script>
+			async function loadIn(element) {
+				try {
+					const response = await fetch(element.dataset.source);
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					const data = await response.text();
+					element.innerHTML = data;
+				} catch (error) {
+					console.error('Error fetching ' + element.dataset.source, error);
+					element.innerHTML = 'Failed to load :(';
+				}
+			}
+
+			const elements = document.querySelectorAll('[data-source]');
+			elements.forEach(element => loadIn(element));
+		</script>
 	</body>
 </html>
