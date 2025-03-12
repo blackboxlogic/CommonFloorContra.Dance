@@ -154,6 +154,7 @@ namespace ProxyByRegex
 					var remoteContentString = await remoteContent.ReadAsStringAsync();
 					var dances = JsonSerializer.Deserialize<List<DanceSeries>>(remoteContentString)
 						.Where(d => d.city.EndsWith(state) && !d.inactive)
+						.OrderBy(d=> d.lat)
 						.ToArray();
 
 					var html = string.Join(", ", dances
@@ -179,6 +180,7 @@ namespace ProxyByRegex
 			public string url { get; set; }
 			public bool inactive { get; set; }
 			public string[] icals { get; set; }
+			public double lat { get; set; }
 		}
 	}
 }
