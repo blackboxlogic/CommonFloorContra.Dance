@@ -115,6 +115,12 @@ namespace ProxyByRegex
 
 					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now.Date.AddDays(1), DateTime.Now.AddYears(1));
 					var nextEvents = events.OrderBy(e => e.Period.StartTime).ToArray();
+
+					foreach (var contains in req.Query["contains"])
+					{
+						nextEvents = events.Where(e => (e.Source as CalendarEvent).Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
+					}
+
 					var html = "<span>no upcoming events found :(</span>";
 
 					if (nextEvents.Any())
