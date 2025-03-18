@@ -125,7 +125,7 @@ namespace ProxyByRegex
 
 					if (nextEvents.Any())
 					{
-						html = "<ul>" + string.Concat(nextEvents.Select(e => $"<li><b>{e.Period.StartTime.Date.ToString("ddd, MMM d")}</b> {(e.Source as CalendarEvent).Summary}</li>")) + "</ul>";
+						html = "<ul>" + string.Concat(nextEvents.Select(e => $"<li><b>{e.Period.StartTime.Date.ToString("ddd, MMM d, yyyy")}</b> {(e.Source as CalendarEvent).Summary}</li>")) + "</ul>";
 						html = html.Replace("TBD", "<b>TBD</b>");
 					}
 
