@@ -99,8 +99,8 @@ namespace ProxyByRegex
 			}
 		}
 
-		[FunctionName("GetNextYear")]
-		public static async Task<IActionResult> GetNextYear(
+		[FunctionName("GetNextEventsSummaries")]
+		public static async Task<IActionResult> GetNextEventsSummaries(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
 			HttpRequest req)
 		{
@@ -113,12 +113,14 @@ namespace ProxyByRegex
 					var remoteContentString = await remoteContent.ReadAsStringAsync();
 					var cal = Calendar.Load(remoteContentString);
 
-					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now.Date.AddDays(1), DateTime.Now.AddYears(1));
+					var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
+
+					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now.Date.AddDays(1), DateTime.Now.AddMonths(months));
 					var nextEvents = events.OrderBy(e => e.Period.StartTime).ToArray();
 
 					foreach (var contains in req.Query["contains"])
 					{
-						nextEvents = events.Where(e => (e.Source as CalendarEvent).Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
+						nextEvents = nextEvents.Where(e => (e.Source as CalendarEvent).Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
 					}
 
 					var html = "<span>no upcoming events found :(</span>";
