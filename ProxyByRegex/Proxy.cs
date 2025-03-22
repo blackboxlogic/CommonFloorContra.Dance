@@ -11,9 +11,9 @@ using System.Net;
 using Ical.Net;
 using System.Linq;
 using Ical.Net.CalendarComponents;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Collections.Generic;
 using System.Text.Json;
+using Ical.Net.Serialization;
 
 namespace ProxyByRegex
 {
@@ -120,7 +120,8 @@ namespace ProxyByRegex
 
 					foreach (var contains in req.Query["contains"])
 					{
-						nextEvents = nextEvents.Where(e => (e.Source as CalendarEvent).Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
+						nextEvents = nextEvents.Where(e => (e.Source as CalendarEvent).Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)
+						|| (e.Source as CalendarEvent).Description.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
 					}
 
 					var html = "<span>no upcoming events found :(</span>";
@@ -171,6 +172,47 @@ namespace ProxyByRegex
 					{
 						Content = html,
 						ContentType = "text/html; charset=utf-8",
+						StatusCode = (int)HttpStatusCode.OK
+					};
+
+					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+
+					return proxyResponse;
+				}
+			}
+		}
+
+		[FunctionName("GetFilterCalendar")]
+		public static async Task<IActionResult> GetFilterCalendar(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
+			HttpRequest req)
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				client.DefaultRequestHeaders.Add("Accept", @"*/*");
+				using (HttpResponseMessage remoteResponse = await client.GetAsync(req.Query["url"]))
+				using (HttpContent remoteContent = remoteResponse.Content)
+				{
+					var remoteContentString = await remoteContent.ReadAsStringAsync();
+					var cal = Calendar.Load(remoteContentString);
+
+					//var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
+
+					foreach (var e in cal.Events.ToArray())
+					{
+						if (req.Query["contains"].Any(contains => !e.Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)
+							&& !e.Description.Contains(contains, StringComparison.InvariantCultureIgnoreCase)))
+						{
+							cal.Events.Remove(e);
+						}
+					}
+
+					string result = new CalendarSerializer().SerializeToString(cal);
+
+					var proxyResponse = new ContentResult
+					{
+						Content = result,
+						ContentType = "text/calendar; charset=UTF-8",
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
