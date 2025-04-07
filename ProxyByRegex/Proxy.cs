@@ -19,6 +19,10 @@ namespace ProxyByRegex
 {
 	public static class Proxy
 	{
+		// TODO: Cache requests?
+
+		static int CallCount = 0;
+
 		// Google docs embeded have a link replacement scheme. Undo that.
 		const string GoogleRedirect = "https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*";
 		const string HtmlHeadElement = "<head>.*</head>";
@@ -41,7 +45,6 @@ namespace ProxyByRegex
 					{
 						remoteContentString = new Regex(GoogleRedirect).Replace(remoteContentString, "");
 						remoteContentString = new Regex(HtmlHeadElement).Replace(remoteContentString, "");
-						//remoteContentString = remoteContentString.Replace("<head>", "<head><base target=\"_top\">"); // I forget why? Maybe it was about links?
 					}
 					else
 					{
@@ -55,7 +58,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+					AddStandardResponseHeaders(req.HttpContext.Response);
 
 					return proxyResponse;
 				}
@@ -82,7 +85,7 @@ namespace ProxyByRegex
 
 					if (nextEvent != null)
 					{
-						description = $"<h1>{nextEvent.Start.Date.ToString("dddd, MMMM d, yyyy")}</h1><h2>{nextEvent.Summary}</h2>{nextEvent.Description}";
+						description = $"<h1 id='eventDateId' class='eventDateClass'>{nextEvent.Start.Date.ToString("dddd, MMMM d, yyyy")}</h1><h2 id='eventSummaryId' class='eventSummaryClass'>{nextEvent.Summary}</h2><div id='eventDescriptionId' class='eventDescriptionClass' style='eventDescriptionStyle'>{nextEvent.Description}</div>";
 					}
 
 					var proxyResponse = new ContentResult
@@ -92,7 +95,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+					AddStandardResponseHeaders(req.HttpContext.Response);
 
 					return proxyResponse;
 				}
@@ -139,7 +142,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+					AddStandardResponseHeaders(req.HttpContext.Response);
 
 					return proxyResponse;
 				}
@@ -165,8 +168,8 @@ namespace ProxyByRegex
 						.OrderBy(d=> d.lat + d.lon) // south east to north west
 						.ToArray();
 
-					var html = string.Join(", ", dances
-						.Select(d => $"<a href=\"{d.url}\">{d.city.Replace(state, "").TrimEnd(',')}</a>"));
+					var html = "<div id='otherDancesListId' class='otherDancesListClass'>" + string.Join(", ", dances
+						.Select(d => $"<a href=\"{d.url}\">{d.city.Replace(state, "").TrimEnd(',')}</a>")) + "</div>";
 
 					var proxyResponse = new ContentResult
 					{
@@ -175,7 +178,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+					AddStandardResponseHeaders(req.HttpContext.Response);
 
 					return proxyResponse;
 				}
@@ -216,11 +219,17 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					req.HttpContext.Response.Headers["Access-Control-Allow-Origin"] = "*";
+					AddStandardResponseHeaders(req.HttpContext.Response);
 
 					return proxyResponse;
 				}
 			}
+		}
+
+		private static void AddStandardResponseHeaders(HttpResponse response)
+		{
+			response.Headers["Access-Control-Allow-Origin"] = "*";
+			response.Headers["X-CallCount"] = CallCount++.ToString();
 		}
 
 		public class DanceSeries
