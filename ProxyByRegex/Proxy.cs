@@ -99,6 +99,7 @@ namespace ProxyByRegex
 					{
 						description = $"<h1 id='eventDateId' class='eventDateClass'>{nextEvent.Start.Date.ToString("dddd, MMMM d, yyyy")}</h1><h2 id='eventSummaryId' class='eventSummaryClass'>{nextEvent.Summary}</h2><div id='eventDescriptionId' class='eventDescriptionClass' style='eventDescriptionStyle'>{nextEvent.Description}</div>";
 						description = description.Replace("<ul>", "<ul style='list-style: inside'>"); // carrd has list-style:none on <ul>.
+						description = description.Replace("<b>", "<b style='font-weight: bolder'>");
 					}
 
 					var proxyResponse = new ContentResult
