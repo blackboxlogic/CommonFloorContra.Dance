@@ -80,12 +80,25 @@ namespace ProxyByRegex
 					var cal = Calendar.Load(remoteContentString);
 
 					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now, DateTime.Now.AddYears(1));
-					var nextEvent = events.OrderBy(e => e.Period.StartTime).FirstOrDefault()?.Source as CalendarEvent;
+					var nextEvents = events
+						.OrderBy(e => e.Period.StartTime)
+						.Select(e => e.Source)
+						.OfType<CalendarEvent>();
+
+					foreach (var contains in req.Query["contains"])
+					{
+						nextEvents = nextEvents.Where(e => e.Summary.Contains(contains, StringComparison.InvariantCultureIgnoreCase)
+						|| e.Description.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
+					}
+
+					var nextEvent = nextEvents.FirstOrDefault();
+
 					var description = "<span>no upcoming events found :(</span>";
 
 					if (nextEvent != null)
 					{
 						description = $"<h1 id='eventDateId' class='eventDateClass'>{nextEvent.Start.Date.ToString("dddd, MMMM d, yyyy")}</h1><h2 id='eventSummaryId' class='eventSummaryClass'>{nextEvent.Summary}</h2><div id='eventDescriptionId' class='eventDescriptionClass' style='eventDescriptionStyle'>{nextEvent.Description}</div>";
+						description = description.Replace("<ul>", "<ul style='list-style: inside'>"); // carrd has list-style:none on <ul>.
 					}
 
 					var proxyResponse = new ContentResult
