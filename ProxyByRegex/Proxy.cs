@@ -19,13 +19,30 @@ namespace ProxyByRegex
 {
 	public static class Proxy
 	{
-		// TODO: Cache requests?
+		// TODO: Cache requests in azure reddis
 
 		static int CallCount = 0;
 
 		// Google docs embeded have a link replacement scheme. Undo that.
 		const string GoogleRedirect = "https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*";
 		const string HtmlHeadElement = "<head>.*</head>";
+
+		[FunctionName("Hello")]
+		public static async Task<IActionResult> Hello(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+			ILogger log)
+		{
+			var proxyResponse = new ContentResult
+			{
+				Content = "hi!",
+				ContentType = "text/plain",
+				StatusCode = (int)HttpStatusCode.OK
+			};
+
+			AddStandardResponseHeaders(req.HttpContext.Response, req);
+
+			return proxyResponse;
+		}
 
 		[FunctionName("Proxy")]
 		public static async Task<IActionResult> ProxyDoc(
@@ -58,7 +75,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					AddStandardResponseHeaders(req.HttpContext.Response);
+					AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 					return proxyResponse;
 				}
@@ -109,7 +126,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					AddStandardResponseHeaders(req.HttpContext.Response);
+					AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 					return proxyResponse;
 				}
@@ -156,7 +173,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					AddStandardResponseHeaders(req.HttpContext.Response);
+					AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 					return proxyResponse;
 				}
@@ -192,7 +209,7 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					AddStandardResponseHeaders(req.HttpContext.Response);
+					AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 					return proxyResponse;
 				}
@@ -233,16 +250,22 @@ namespace ProxyByRegex
 						StatusCode = (int)HttpStatusCode.OK
 					};
 
-					AddStandardResponseHeaders(req.HttpContext.Response);
+					AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 					return proxyResponse;
 				}
 			}
 		}
 
-		private static void AddStandardResponseHeaders(HttpResponse response)
+		private static void AddStandardResponseHeaders(HttpResponse response, HttpRequest req)
 		{
-			response.Headers["Access-Control-Allow-Origin"] = "*";
+			//Access-Control-Allow-Origin: https://your-website.com
+			//Access-Control-Allow-Credentials: true
+
+			var origin = req.Headers["Origin"].FirstOrDefault();
+
+			response.Headers["Access-Control-Allow-Origin"] = origin == null || origin == "null" ? "*" : origin;
+			response.Headers["Access-Control-Allow-Credentials"] = "true";
 			response.Headers["X-CallCount"] = CallCount++.ToString();
 		}
 

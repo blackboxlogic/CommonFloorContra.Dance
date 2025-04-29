@@ -61,24 +61,8 @@
 	</head>
 	<body>
 		<!--http://localhost:7024/-->
-		<div style="margin: 20px" data-source="https://icalprocessor.azurewebsites.net/api/Proxy?url=https://docs.google.com/document/d/e/2PACX-1vQDy-NgLph_BKPmwloVuDQyxuRECjyR-DELQtD6IB-ACExMX8lCq-JPGb6p-9WvRDNHFpMm_P4XGyNf/pub?embedded=true">Loading...</div>
-
-		<div style="margin: 20px; line-height: 2" data-source="https://icalprocessor.azurewebsites.net/api/GetNextEvent?contains=contra&url=https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics">Loading...</div>
-
-		<h1 style="margin-left: 20px ">Future Events</h1>
-
-		<iframe src="https://www.google.com/calendar/embed?showTitle=0&amp;mode=AGENDA&amp;height=500&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;
-			src=0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com&amp;
-			ctz=America%2FNew_York" style="border-width: 0; margin: 20px" width="90%" height="500" frameborder="0" scrolling="no"></iframe>
-
-		<div style="display:flex; flex-direction:row">
-			<a style="margin:20px" href="https://calendar.google.com/calendar/embed?src=0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com&ctz=America%2FNew_York">Google calendar link</a>
-			<a style="margin: 20px" href="webcal://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics">iCal link</a>
-		</div>
-
-		<h1 style="margin-left: 20px">Other Maine Dances</h1>
-
-		<div style="margin: 20px; line-height: 1.5" data-source="https://icalprocessor.azurewebsites.net/api/GetOtherDances?state=ME">Loading...</div>
+		<div style="margin: 20px" data-source="http://localhost:7024/api/Hello">Loading...</div>
+		<div style="margin: 20px" data-source="https://icalprocessor.azurewebsites.net/api/Hello">Loading...</div>
 
 		<script>
 			async function loadIn(element) {
