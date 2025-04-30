@@ -19,7 +19,7 @@ namespace ProxyByRegex
 {
 	public static class Proxy
 	{
-		// TODO: Cache requests in azure reddis
+		// TODO: Cache requests in azure reddis (after azure non-profit grant gives $2,000/y)
 
 		static int CallCount = 0;
 
@@ -158,11 +158,11 @@ namespace ProxyByRegex
 						|| (e.Source as CalendarEvent).Description.Contains(contains, StringComparison.InvariantCultureIgnoreCase)).ToArray();
 					}
 
-					var html = "<span>no upcoming events found :(</span>";
+					var html = "<span id='eventSummaryId' class='eventSummaryClass'>No events found :(</span>";
 
 					if (nextEvents.Any())
 					{
-						html = "<ul>" + string.Concat(nextEvents.Select(e => $"<li><b>{e.Period.StartTime.Date.ToString("ddd, MMM d, yyyy")}</b> {(e.Source as CalendarEvent).Summary}</li>")) + "</ul>";
+						html = "<ul>" + string.Concat(nextEvents.Select(e => $"<li><span id='eventSummaryId' class='eventSummaryClass'><b>{e.Period.StartTime.Date.ToString("ddd, MMM d, yyyy")}</b> {(e.Source as CalendarEvent).Summary}</span></li>")) + "</ul>";
 						html = html.Replace("TBD", "<b>TBD</b>");
 					}
 
@@ -259,14 +259,12 @@ namespace ProxyByRegex
 
 		private static void AddStandardResponseHeaders(HttpResponse response, HttpRequest req)
 		{
-			//Access-Control-Allow-Origin: https://your-website.com
-			//Access-Control-Allow-Credentials: true
-
+			// Detect cold starts
+			response.Headers["X-CallCount"] = CallCount++.ToString();
+			// I think CORS is handled by azure: FunctionApp/API/CORS/Allowed Origins/*
 			var origin = req.Headers["Origin"].FirstOrDefault();
-
 			response.Headers["Access-Control-Allow-Origin"] = origin == null || origin == "null" ? "*" : origin;
 			response.Headers["Access-Control-Allow-Credentials"] = "true";
-			response.Headers["X-CallCount"] = CallCount++.ToString();
 		}
 
 		public class DanceSeries
