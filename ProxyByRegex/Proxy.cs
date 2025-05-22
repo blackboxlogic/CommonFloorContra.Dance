@@ -120,7 +120,7 @@ namespace ProxyByRegex
 						e.Description = e.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"); // carrd has list-style:none on <ul>.
 					}
 
-					var result = JsonSerializer.Serialize(nextEvents.Select(e => new DanceEvent() { date = e.Start.AsDateTimeOffset, summary = e.Summary, description = e.Description }).ToArray());
+					var result = JsonSerializer.Serialize(nextEvents.Select(e => new DanceEvent() { date = e.Start.AsDateTimeOffset, summary = e.Summary, description = e.Description, location = e.Location }).ToArray());
 
 					var proxyResponse = new ContentResult
 					{
@@ -238,6 +238,7 @@ namespace ProxyByRegex
 			public DateTimeOffset date { get; set; }
 			public string summary { get; set; }
 			public string description { get; set; }
+			public string location { get; set; }
 		}
 	}
 }
