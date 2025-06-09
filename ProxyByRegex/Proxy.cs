@@ -103,7 +103,7 @@ namespace ProxyByRegex
 
 					var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
 
-					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now, DateTime.Now.AddMonths(months));
+					var events = cal.GetOccurrences<CalendarEvent>(DateTime.Now.Date, DateTime.Now.AddMonths(months));
 					var nextEvents = events
 						.OrderBy(e => e.Period.StartTime)
 						.Select(e => e.Source)
