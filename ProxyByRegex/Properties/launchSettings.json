@@ -2,7 +2,7 @@
   "profiles": {
     "ProxyByRegex": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7024",
+      "commandLineArgs": "--port 7205",
       "launchBrowser": false
     }
   }
