@@ -65,7 +65,7 @@ public class Proxy
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
 		ILogger log)
 	{
-		var url = req.Query["url"].ToString();
+		var url = req.Query["url"].FirstOrDefault();
 
 		if (url.StartsWith(@"https://docs.google.com/document")) { }
 		if (url.StartsWith(@"https://calendar.google.com/calendar/ical")) { }
@@ -109,31 +109,30 @@ public class Proxy
 
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
 
-		var start = new CalDateTime(DateTime.Now.Date); // time zone?
-		var end = new CalDateTime(DateTime.Now.AddMonths(months)); // time zone?
-		var events = cal.GetOccurrences<CalendarEvent>(start);
+		var start = new CalDateTime(DateTime.UtcNow.Date);
+		var end = new CalDateTime(DateTime.UtcNow.Date.AddMonths(months));
+		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end);
+
+		var containsFilters = req.Query["contains"].Where(c => !string.IsNullOrEmpty(c)).ToArray();
 
 		var nextEvents = events
-			.OrderBy(e => e.Period.StartTime) // StartTime could be null?
-			.TakeWhile(e => e.Period.EndTime < end) // EndTime might be null?
+			.OrderBy(e => e.Period.StartTime) // StartTime could be null? // OR e.start?
 			.Select(e => e.Source) // is source the initial reoccuring event?
-			.OfType<CalendarEvent>();
+			.OfType<CalendarEvent>()
+			.Where(e =>
+				containsFilters.Length == 0 ||
+				containsFilters.Any(contains =>
+					e.Summary?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true ||
+					e.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true)
+			)
+			.Select(e => new DanceEvent() {
+				date = new DateTimeOffset(e.Start.AsUtc),
+				summary = e.Summary,
+				description = e.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"), // carrd has list-style:none on <ul>.
+				location = e.Location })
+			.ToArray();
 
-		foreach (var contains in req.Query["contains"])
-		{
-			if (contains != null)
-			{
-				nextEvents = nextEvents.Where(e => e.Summary?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true
-					|| e.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true).ToArray();
-			}
-		}
-
-		foreach (var e in nextEvents)
-		{
-			e.Description = e.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"); // carrd has list-style:none on <ul>.
-		}
-
-		var result = JsonSerializer.Serialize(nextEvents.Select(e => new DanceEvent() { date = new DateTimeOffset(e.Start.AsUtc), summary = e.Summary, description = e.Description, location = e.Location }).ToArray());
+		var result = JsonSerializer.Serialize(nextEvents);
 
 		var proxyResponse = new ContentResult
 		{
