@@ -269,3 +269,5 @@ __azurite_db_queue_extent__.json
 __azurite_db_table__.json
 AzuriteConfig
 cc6a6a0c-f56e-4da4-89c5-d43514b2b0c8
+/__blobstorage__
+/__queuestorage__
