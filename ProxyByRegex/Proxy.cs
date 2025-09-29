@@ -23,7 +23,6 @@ public class Proxy
 	//https://ui.toast.com/tui-calendar
 	//https://styledcalendar.com/
 
-	private static MemoryCache Cache = new(new MemoryCacheOptions());
 	private static int CallCount = 0;
 
 	// Google docs embeded have a link replacement scheme. Undo that.
@@ -32,12 +31,14 @@ public class Proxy
 
 	private readonly HttpClient HttpClient;
 	private readonly ILogger Logger;
+	private readonly IMemoryCache Cache;
 
-	public Proxy(HttpClient httpClient, ILogger<Proxy> logger)
+	public Proxy(HttpClient httpClient, ILogger<Proxy> logger, IMemoryCache cache)
 	{
 		HttpClient = httpClient;
 		HttpClient.DefaultRequestHeaders.Add("Accept", @"*/*");
 		Logger = logger;
+		Cache = cache;
 	}
 
 	[Function("Hello")]
@@ -109,27 +110,30 @@ public class Proxy
 
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
 
-		var start = new CalDateTime(DateTime.UtcNow.Date);
-		var end = new CalDateTime(DateTime.UtcNow.Date.AddMonths(months));
-		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end);
+		var start = CalDateTime.UtcNow;
+		var end = start.AddMonths(months);
+		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
 
 		var containsFilters = req.Query["contains"].Where(c => !string.IsNullOrEmpty(c)).ToArray();
 
 		var nextEvents = events
 			.OrderBy(e => e.Period.StartTime) // StartTime could be null? // OR e.start?
-			.Select(e => e.Source) // is source the initial reoccuring event?
-			.OfType<CalendarEvent>()
+			.Where(e => e.Source is CalendarEvent)
+			.Select(e => new {period = e.Period, source = e.Source as CalendarEvent}) // is source the initial reoccuring event?
+			//.OfType<CalendarEvent>()
 			.Where(e =>
 				containsFilters.Length == 0 ||
 				containsFilters.Any(contains =>
-					e.Summary?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true ||
-					e.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true)
+					e.source.Summary?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true ||
+					e.source.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true)
 			)
 			.Select(e => new DanceEvent() {
-				date = new DateTimeOffset(e.Start.AsUtc),
-				summary = e.Summary,
-				description = e.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"), // carrd has list-style:none on <ul>.
-				location = e.Location })
+				date = new DateTimeOffset(e.period.StartTime.AsUtc), // timezone???
+				start = new DateTimeOffset(e.period.StartTime.AsUtc), // timezone???
+				end = new DateTimeOffset(e.period.EffectiveEndTime.AsUtc), // timezone??? Null?
+				summary = e.source.Summary,
+				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"), // carrd has list-style:none on <ul>.
+				location = e.source.Location })
 			.ToArray();
 
 		var result = JsonSerializer.Serialize(nextEvents);
@@ -265,6 +269,8 @@ public class Proxy
 	public class DanceEvent
 	{
 		public DateTimeOffset date { get; set; }
+		public DateTimeOffset start { get; set; }
+		public DateTimeOffset end { get; set; }
 		public string summary { get; set; }
 		public string description { get; set; }
 		public string location { get; set; }
