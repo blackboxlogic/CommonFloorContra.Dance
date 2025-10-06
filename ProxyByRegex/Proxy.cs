@@ -110,13 +110,9 @@ public class Proxy
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
 		var start = CalDateTime.UtcNow;
 		var end = start.AddMonths(months);
-
-		// after https://github.com/ical-org/ical.net/issues/871
-		var events = ICalNetHelper.MyGetOccurrences<CalendarEvent>(cal, start).TakeWhileBefore(end).ToArray();
-		//var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
+		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
 
 		var containsFilters = req.Query["contains"].Where(c => !string.IsNullOrEmpty(c)).ToArray();
-
 		var nextEvents = events
 			.OrderBy(e => e.Period.StartTime) // StartTime could be null? // OR e.start?
 			.Where(e => e.Source is CalendarEvent)
