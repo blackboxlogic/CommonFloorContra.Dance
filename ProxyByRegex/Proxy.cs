@@ -22,8 +22,6 @@ public class Proxy
 	//https://ui.toast.com/tui-calendar
 	//https://styledcalendar.com/
 
-	private static int CallCount = 0;
-
 	// Google docs embeded have a link replacement scheme. Undo that.
 	private static readonly Regex GoogleRedirectRegex = new("https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*", RegexOptions.Compiled);
 	private static readonly Regex HtmlHeadElementRegex = new("<head>.*</head>", RegexOptions.Compiled | RegexOptions.Singleline);
@@ -40,9 +38,7 @@ public class Proxy
 	}
 
 	[Function("Hello")]
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-	public static async Task<IActionResult> Hello(
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+	public static IActionResult Hello(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
 		ILogger log)
 	{
@@ -53,8 +49,6 @@ public class Proxy
 			StatusCode = (int)HttpStatusCode.OK
 		};
 
-		AddStandardResponseHeaders(req.HttpContext.Response, req);
-
 		return proxyResponse;
 	}
 
@@ -64,11 +58,11 @@ public class Proxy
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
 		ILogger log)
 	{
-		var url = req.Query["url"].FirstOrDefault() ?? throw new Exception("No URL");
+		var url = req.Query["url"].FirstOrDefault();
 
 		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
 		{
-			return new BadRequestObjectResult("Invalid URL format.");
+			return new BadRequestObjectResult("Invalid URL.");
 		}
 
 		bool isGoogleDoc = uri.Host.Equals("docs.google.com", StringComparison.OrdinalIgnoreCase);
@@ -79,7 +73,7 @@ public class Proxy
 			return new BadRequestObjectResult("Unsupported URL.");
 		}
 
-		var httpClient = HttpClientFactory.CreateClient(); // should 'using'?
+		using (var httpClient = HttpClientFactory.CreateClient())
 		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(uri))
 		using (HttpContent remoteContent = remoteResponse.Content)
 		{
@@ -97,8 +91,6 @@ public class Proxy
 				ContentType = remoteContent.Headers.ContentType?.ToString(),
 				StatusCode = (int)HttpStatusCode.OK
 			};
-
-			AddStandardResponseHeaders(req.HttpContext.Response, req);
 
 			return proxyResponse;
 		}
@@ -148,9 +140,17 @@ public class Proxy
 			StatusCode = (int)HttpStatusCode.OK
 		};
 
-		AddStandardResponseHeaders(req.HttpContext.Response, req);
-
 		return proxyResponse;
+	}
+
+	[Function("DailyCleanup")]
+	public async Task DailyCleanup([TimerTrigger("0 0 0 * * *")] TimerInfo myTimer)
+	{
+		Logger.LogInformation($"C# Timer trigger function 'DailyCleanup' executed at: {DateTime.Now}");
+		// Add your daily cleanup or scheduled logic here.
+		// For example, you might clear specific cache entries, log statistics, etc.
+		await Task.CompletedTask; // Or perform actual async work
+		Logger.LogInformation($"Next timer schedule for 'DailyCleanup' at: {myTimer.ScheduleStatus?.Next}");
 	}
 
 	private async Task<string> Fetch(string url, bool useCache = true)
@@ -160,7 +160,7 @@ public class Proxy
 			return cachedContent;
 		}
 
-		var httpClient = HttpClientFactory.CreateClient();
+		using(var httpClient = HttpClientFactory.CreateClient())
 		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(url))
 		using (HttpContent remoteContent = remoteResponse.Content)
 		{
@@ -202,8 +202,6 @@ public class Proxy
 	//				StatusCode = (int)HttpStatusCode.OK
 	//			};
 
-	//			AddStandardResponseHeaders(req.HttpContext.Response, req);
-
 	//			return proxyResponse;
 	//		}
 	//	}
@@ -242,23 +240,10 @@ public class Proxy
 	//				ContentType = "text/calendar; charset=UTF-8",
 	//				StatusCode = (int)HttpStatusCode.OK
 	//			};
-
-	//			AddStandardResponseHeaders(req.HttpContext.Response, req);
-
 	//			return proxyResponse;
 	//		}
 	//	}
 	//}
-
-	private static void AddStandardResponseHeaders(HttpResponse response, HttpRequest req)
-	{
-		// Detect cold starts
-		response.Headers["X-CallCount"] = CallCount++.ToString();
-		// I think CORS is handled by azure: FunctionApp/API/CORS/Allowed Origins/*
-		var origin = req.Headers["Origin"].FirstOrDefault();
-		response.Headers["Access-Control-Allow-Origin"] = origin == null || origin == "null" ? "*" : origin;
-		response.Headers["Access-Control-Allow-Credentials"] = "true";
-	}
 
 	public class DanceSeries
 	{
