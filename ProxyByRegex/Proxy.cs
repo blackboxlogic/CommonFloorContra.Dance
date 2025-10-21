@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -26,17 +25,16 @@ public class Proxy
 	private static int CallCount = 0;
 
 	// Google docs embeded have a link replacement scheme. Undo that.
-	const string GoogleRedirect = "https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*";
-	const string HtmlHeadElement = "<head>.*</head>";
-
-	private readonly HttpClient HttpClient;
+	private static readonly Regex GoogleRedirectRegex = new("https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*", RegexOptions.Compiled);
+	private static readonly Regex HtmlHeadElementRegex = new("<head>.*</head>", RegexOptions.Compiled | RegexOptions.Singleline);
+	private readonly IHttpClientFactory HttpClientFactory;
 	private readonly ILogger Logger;
 	private readonly IMemoryCache Cache;
 
-	public Proxy(HttpClient httpClient, ILogger<Proxy> logger, IMemoryCache cache)
+	public Proxy(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, IMemoryCache cache)
 	{
-		HttpClient = httpClient;
-		HttpClient.DefaultRequestHeaders.Add("Accept", @"*/*");
+		//HttpClient.DefaultRequestHeaders.Add("Accept", @"*/*");
+		HttpClientFactory = httpClientFactory;
 		Logger = logger;
 		Cache = cache;
 	}
@@ -60,36 +58,43 @@ public class Proxy
 		return proxyResponse;
 	}
 
-	//What's this being used for? I guess if I want to get an ical file, and google doesn't have cors header for it.
+	// If you want to get an ical file, and google doesn't have cors header for it.
 	[Function("Proxy")]
 	public async Task<IActionResult> ProxyDoc(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
 		ILogger log)
 	{
-		var url = req.Query["url"].FirstOrDefault();
+		var url = req.Query["url"].FirstOrDefault() ?? throw new Exception("No URL");
 
-		if (url.StartsWith(@"https://docs.google.com/document")) { }
-		if (url.StartsWith(@"https://calendar.google.com/calendar/ical")) { }
-		else
+		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
 		{
-			throw new Exception("Unsupported URL");
+			return new BadRequestObjectResult("Invalid URL format.");
 		}
 
-		using (HttpResponseMessage remoteResponse = await HttpClient.GetAsync(url))
+		bool isGoogleDoc = uri.Host.Equals("docs.google.com", StringComparison.OrdinalIgnoreCase);
+		bool isGoogleCalendar = uri.Host.Equals("calendar.google.com", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.Contains("/ical");
+
+		if (!isGoogleDoc && !isGoogleCalendar)
+		{
+			return new BadRequestObjectResult("Unsupported URL.");
+		}
+
+		var httpClient = HttpClientFactory.CreateClient(); // should 'using'?
+		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(uri))
 		using (HttpContent remoteContent = remoteResponse.Content)
 		{
 			var remoteContentString = await remoteContent.ReadAsStringAsync();
 
-			if (url.StartsWith(@"https://docs.google.com/document"))
+			if (isGoogleDoc)
 			{
-				remoteContentString = new Regex(GoogleRedirect).Replace(remoteContentString, "");
-				remoteContentString = new Regex(HtmlHeadElement).Replace(remoteContentString, "");
+				remoteContentString = GoogleRedirectRegex.Replace(remoteContentString, "");
+				remoteContentString = HtmlHeadElementRegex.Replace(remoteContentString, "");
 			}
 
 			var proxyResponse = new ContentResult
 			{
 				Content = remoteContentString,
-				ContentType = remoteContent.Headers.ContentType.ToString(),
+				ContentType = remoteContent.Headers.ContentType?.ToString(),
 				StatusCode = (int)HttpStatusCode.OK
 			};
 
@@ -102,22 +107,22 @@ public class Proxy
 	// takes 'url', 'months' and 'contains' query parameters
 	[Function("GetNextEventsJSON")]
 	public async Task<IActionResult> GetNextEventsJSON(
-		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
-			HttpRequest req)
+		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
-		var remoteContentString = await Fetch(req.Query["url"]);
-		var cal = Calendar.Load(remoteContentString);
-		var months = int.Parse(req.Query["months"].FirstOrDefault("12"));
+		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
+		var remoteContentString = await Fetch(urlString);
+		var cal = Calendar.Load(remoteContentString) ?? throw new Exception("Failed to load calendar at " + remoteContentString);
+		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("url"));
 		var start = CalDateTime.UtcNow;
 		var end = start.AddMonths(months);
 		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
 
-		var containsFilters = req.Query["contains"].Where(c => !string.IsNullOrEmpty(c)).ToArray();
+		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
 		var nextEvents = events
-			.OrderBy(e => e.Period.StartTime) // StartTime could be null? // OR e.start?
+			.OrderBy(e => e.Period.StartTime)
+			// source is the INITIAL reoccuring event
 			.Where(e => e.Source is CalendarEvent)
-			.Select(e => new {period = e.Period, source = e.Source as CalendarEvent}) // is source the initial reoccuring event?
-			//.OfType<CalendarEvent>()
+			.Select(e => new {period = e.Period, source = (CalendarEvent)e.Source})
 			.Where(e =>
 				containsFilters.Length == 0 ||
 				containsFilters.Any(contains =>
@@ -125,12 +130,13 @@ public class Proxy
 					e.source.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true)
 			)
 			.Select(e => new DanceEvent() {
-				date = new DateTimeOffset(e.period.StartTime.AsUtc), // timezone???
-				start = new DateTimeOffset(e.period.StartTime.AsUtc), // timezone???
-				end = new DateTimeOffset(e.period.EffectiveEndTime.AsUtc), // timezone??? Null?
-				summary = e.source.Summary,
-				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside'>").Replace("<b>", "<b style='font-weight: bolder'>"), // carrd has list-style:none on <ul>.
-				location = e.source.Location })
+				date = new DateTimeOffset(e.period.StartTime.AsUtc),
+				start = new DateTimeOffset(e.period.StartTime.AsUtc),
+				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
+				summary = e.source.Summary ?? "",
+				// carrd has list-style:none on <ul>.
+				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside'>")?.Replace("<b>", "<b style='font-weight: bolder'>")?.Replace("\n", "<br>"),
+				location = e.source.Location})
 			.ToArray();
 
 		var result = JsonSerializer.Serialize(nextEvents);
@@ -149,15 +155,16 @@ public class Proxy
 
 	private async Task<string> Fetch(string url, bool useCache = true)
 	{
-		if (useCache && Cache.TryGetValue(url, out string cachedContent))
+		if (useCache && Cache.TryGetValue(url, out string? cachedContent) && cachedContent != null)
 		{
 			return cachedContent;
 		}
 
-		using (HttpResponseMessage remoteResponse = await HttpClient.GetAsync(url))
+		var httpClient = HttpClientFactory.CreateClient();
+		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(url))
 		using (HttpContent remoteContent = remoteResponse.Content)
 		{
-			var result = await remoteContent.ReadAsStringAsync();
+			var result = await remoteContent.ReadAsStringAsync() ?? throw new Exception("Received null from " + url);
 			Cache.Set(url, result, new MemoryCacheEntryOptions
 			{
 				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
@@ -255,10 +262,10 @@ public class Proxy
 
 	public class DanceSeries
 	{
-		public string city { get; set; }
-		public string url { get; set; }
+		public required string city { get; set; }
+		public required string url { get; set; }
 		public bool inactive { get; set; }
-		public string[] icals { get; set; }
+		public required string[] icals { get; set; }
 		public double lat { get; set; }
 		public double lon { get; set; }
 	}
@@ -268,8 +275,8 @@ public class Proxy
 		public DateTimeOffset date { get; set; }
 		public DateTimeOffset start { get; set; }
 		public DateTimeOffset end { get; set; }
-		public string summary { get; set; }
-		public string description { get; set; }
-		public string location { get; set; }
+		public required string summary { get; set; }
+		public string? description { get; set; }
+		public string? location { get; set; }
 	}
 }
