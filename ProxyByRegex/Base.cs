@@ -56,7 +56,7 @@ public abstract class Base
 				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
 				summary = e.source.Summary ?? "",
 				// carrd has list-style:none on <ul>.
-				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside'>")?.Replace("<b>", "<b style='font-weight: bolder'>")?.Replace("\n", "<br>"),
+				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")?.Replace("<b>", "<b style='font-weight: bolder'>")?.Replace("\n", "<br>"),
 				location = e.source.Location
 			})
 			.ToArray();
@@ -78,7 +78,7 @@ public abstract class Base
 			var result = await remoteContent.ReadAsStringAsync() ?? throw new Exception("Received null from " + url);
 			Cache.Set(url, result, new MemoryCacheEntryOptions
 			{
-				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
 			});
 			return result;
 		}
