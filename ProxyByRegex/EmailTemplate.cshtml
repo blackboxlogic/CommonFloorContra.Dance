@@ -1,0 +1,48 @@
+@using CalendarFunctions;
+@model IEnumerable<Email.EmailModel>
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body {
+                font-family: sans-serif;
+            }
+            .event {
+                margin-bottom: 20px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 20px;
+            }
+            .event-title {
+                font-size: 24px;
+                font-weight: bold;
+            }
+            .event-date {
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Upcoming Events:</h1>
+        <hr />
+        @foreach (var ev in Model.Events)
+        {
+            <div class="event">
+                <div class="event-title">@ev.Summary</div>
+
+                @if(ev.Start.Date == ev.End.Date)
+                {
+                    <div class="event-date">When: @ev.Start.ToString("MMMM dd"), @ev.Start.ToString("hh:mm tt") to @ev.End.ToString("hh:mm tt")</div>
+                }else{
+                    <div class="event-date">When: @ev.Start.ToString("MMMM dd") @ev.Start.ToString("hh:mm tt") to @ev.End.ToString("MMMM dd") @ev.End.ToString("hh:mm tt")</div>
+                }
+                <div>Where: <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.Location)">@ev.Location</a></div>
+                <div>@ev.Description</div>
+            </div>
+            <hr />
+        }
+        <div>Get more info about @Model.SeriesName at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite</a>.</div>
+        <br/>
+        <div><a href="@Model.CalendarUrl">Get all our events on your calendar, always up to date.</a></div>
+    </body>
+</html>
