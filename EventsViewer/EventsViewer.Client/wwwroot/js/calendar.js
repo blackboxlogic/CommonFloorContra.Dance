@@ -3,7 +3,6 @@ import ICAL from "https://unpkg.com/ical.js/dist/ical.min.js";
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
-// import interactionPlugin from '@fullcalendar/interaction'
 // import listPlugin from '@fullcalendar/list'
 
 // Example:
@@ -88,6 +87,17 @@ window.calendarInterop = {
                 console.error('Error fetching dances.json:', error);
                 failureCallback(error);
             });
+        },
+        eventClick: function(info) {
+          var event = info.event;
+          var description = event.extendedProps.description || 'No description available.';
+          var location = event.extendedProps.location || 'No location available.';
+          var content = 'Title: ' + event.title + '\n' +
+                        'Start: ' + event.start.toLocaleString() + '\n' +
+                        'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '\n' +
+                        'Location: ' + location + '\n' +
+                        'Description: ' + description;
+          alert(content);
         }
       });
       calendar.render();
