@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
@@ -31,13 +32,14 @@ public abstract class Base
 		return Configuration[key] ?? throw new Exception("Missing config: " + key);
 	}
 
-	internal async Task<DanceEvent[]> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
+	internal async Task<(DanceEvent[] nextEvents, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
 	{
-		var remoteContentString = await Fetch(urlString);
+		(var remoteContentString, var headers, var cached) = await Fetch(urlString);
 		var cal = Calendar.Load(remoteContentString) ?? throw new Exception("Failed to load calendar at " + remoteContentString);
 		var start = CalDateTime.UtcNow;
 		var end = start.AddMonths(months);
 		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
+
 		var nextEvents = events
 			.OrderBy(e => e.Period.StartTime)
 			// source is the INITIAL reoccuring event
@@ -51,36 +53,47 @@ public abstract class Base
 			)
 			.Select(e => new DanceEvent()
 			{
+				// TODO: Test "all day" events, multi-day events, zero-duration events.
 				date = new DateTimeOffset(e.period.StartTime.AsUtc),
 				start = new DateTimeOffset(e.period.StartTime.AsUtc),
+				startLocal = e.period.StartTime.Value,
+				endLocal = e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
 				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
 				summary = e.source.Summary ?? "",
 				// carrd has list-style:none on <ul>.
+				// TODO: maybe move this to carrd JS
 				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")?.Replace("<b>", "<b style='font-weight: bolder'>")?.Replace("\n", "<br>"),
 				location = e.source.Location
 			})
 			.ToArray();
 
-		return nextEvents;
+		return (nextEvents, headers, cached);
 	}
 
-	internal async Task<string> Fetch(string url, bool useCache = true)
+	private MemoryCacheEntryOptions FetchCacheOptions => new()
 	{
-		if (useCache && Cache.TryGetValue(url, out string? cachedContent) && cachedContent != null)
+		AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(double.Parse(Configuration["CacheDurationMinutes"] ?? "10"))
+	};
+
+	internal async Task<(string content, HttpContentHeaders headers, bool cached)> Fetch(string url, bool useCache = true)
+	{
+		if (useCache && Cache.TryGetValue("content%" + url, out string? cachedContent) && cachedContent != null
+			&& Cache.TryGetValue("headers%" + url, out HttpContentHeaders? cachedHeaders) && cachedHeaders != null)
 		{
-			return cachedContent;
+			//Logger.LogInformation("Cache hit for {url}", url);
+			return (cachedContent, cachedHeaders, true);
 		}
+
+		//Logger.LogInformation("Cache miss for {url}", url);
 
 		using (var httpClient = HttpClientFactory.CreateClient())
 		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(url))
 		using (HttpContent remoteContent = remoteResponse.Content)
 		{
 			var result = await remoteContent.ReadAsStringAsync() ?? throw new Exception("Received null from " + url);
-			Cache.Set(url, result, new MemoryCacheEntryOptions
-			{
-				AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-			});
-			return result;
+			Cache.Set("content%" + url, result, FetchCacheOptions);
+			Cache.Set("headers%" + url, remoteContent.Headers, FetchCacheOptions);
+			return (result, remoteContent.Headers, false);
 		}
 	}
 
@@ -99,6 +112,8 @@ public abstract class Base
 		public DateTimeOffset date { get; set; }
 		public DateTimeOffset start { get; set; }
 		public DateTimeOffset end { get; set; }
+		public DateTime startLocal { get; set; }
+		public DateTime endLocal { get; set; }
 		public required string summary { get; set; }
 		public string? description { get; set; }
 		public string? location { get; set; }

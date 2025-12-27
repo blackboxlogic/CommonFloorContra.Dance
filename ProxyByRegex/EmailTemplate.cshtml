@@ -1,48 +1,48 @@
 @using CalendarFunctions;
-@model IEnumerable<Email.EmailModel>
+@model Email.EmailModel
 
 <!DOCTYPE html>
 <html>
     <head>
+        <title>Upcoming Events: @Model.SeriesName</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
             body {
                 font-family: sans-serif;
+                font-size: 14px;
+                background-color: 
             }
-            .event {
-                margin-bottom: 20px;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 20px;
-            }
-            .event-title {
-                font-size: 24px;
+            label {
                 font-weight: bold;
             }
-            .event-date {
-                font-style: italic;
+            title {
+                font-size: 20px;
+                font-weight: bold;
             }
         </style>
     </head>
     <body>
-        <h1>Upcoming Events:</h1>
-        <hr />
+        <h1><b>Upcoming Events:</b></h1>
+        <hr/>
         @foreach (var ev in Model.Events)
         {
             <div class="event">
-                <div class="event-title">@ev.Summary</div>
+                <div class="title">@ev.summary</div>
 
-                @if(ev.Start.Date == ev.End.Date)
+                @if(ev.start.Date == ev.end.Date)
                 {
-                    <div class="event-date">When: @ev.Start.ToString("MMMM dd"), @ev.Start.ToString("hh:mm tt") to @ev.End.ToString("hh:mm tt")</div>
+                    <div><div class="label">When:</div> @ev.startLocal.ToString("MMMM d"), @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("h:mm tt")</div>
                 }else{
-                    <div class="event-date">When: @ev.Start.ToString("MMMM dd") @ev.Start.ToString("hh:mm tt") to @ev.End.ToString("MMMM dd") @ev.End.ToString("hh:mm tt")</div>
+                    <div><div class="label">When:</div> @ev.startLocal.ToString("MMMM d") @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("MMMM d") @ev.endLocal.ToString("h:mm tt")</div>
                 }
-                <div>Where: <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.Location)">@ev.Location</a></div>
-                <div>@ev.Description</div>
+
+                <div><div class="label">Where:</div> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
+                <div class="label">Details:</div>
+                <div>@Raw(ev.description)</div>
             </div>
-            <hr />
+            <hr/>
         }
-        <div>Get more info about @Model.SeriesName at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite</a>.</div>
-        <br/>
-        <div><a href="@Model.CalendarUrl">Get all our events on your calendar, always up to date.</a></div>
+        <div class="label">More info on our website: <a href="@Model.SeriesWebsite">@Model.SeriesName</a> or <a href="@Model.CalendarUrl">get all our events on your calendar, always up to date.</a></div>
     </body>
 </html>

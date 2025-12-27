@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Cors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,7 @@ public class Proxy : Base
 		ILogger log)
 	{
 		var url = req.Query["url"].FirstOrDefault();
+		var useCache = req.Query["cache"].FirstOrDefault()?.ToLower() != "false";
 
 		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
 		{
@@ -52,33 +54,39 @@ public class Proxy : Base
 
 		bool isGoogleDoc = uri.Host.Equals("docs.google.com", StringComparison.OrdinalIgnoreCase);
 		bool isGoogleCalendar = uri.Host.Equals("calendar.google.com", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.Contains("/ical");
+		bool looksLikeOtherCalendar = uri.AbsolutePath.EndsWith(".ics", StringComparison.OrdinalIgnoreCase)
+			|| uri.AbsolutePath.Contains("ical", StringComparison.OrdinalIgnoreCase)
+			|| uri.AbsolutePath.Contains("calendar", StringComparison.OrdinalIgnoreCase);
 
-		if (!isGoogleDoc && !isGoogleCalendar)
+		if (!isGoogleDoc && !isGoogleCalendar && !looksLikeOtherCalendar)
 		{
 			return new BadRequestObjectResult("Unsupported URL.");
 		}
 
-		using (var httpClient = HttpClientFactory.CreateClient())
-		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(uri))
-		using (HttpContent remoteContent = remoteResponse.Content)
+		(var remoteContentString, var headers, var cached) = await Fetch(url, useCache);
+
+		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
+
+		if (isGoogleDoc)
 		{
-			var remoteContentString = await remoteContent.ReadAsStringAsync();
-
-			if (isGoogleDoc)
-			{
-				remoteContentString = GoogleRedirectRegex.Replace(remoteContentString, "");
-				remoteContentString = HtmlHeadElementRegex.Replace(remoteContentString, "");
-			}
-
-			var proxyResponse = new ContentResult
-			{
-				Content = remoteContentString,
-				ContentType = remoteContent.Headers.ContentType?.ToString(),
-				StatusCode = (int)HttpStatusCode.OK
-			};
-
-			return proxyResponse;
+			remoteContentString = GoogleRedirectRegex.Replace(remoteContentString, "");
+			remoteContentString = HtmlHeadElementRegex.Replace(remoteContentString, "");
 		}
+
+		var proxyResponse = new ContentResult
+		{
+			Content = remoteContentString,
+			ContentType = headers.ContentType?.ToString(),
+			StatusCode = (int)HttpStatusCode.OK
+		};
+
+		// CORS is failing on 3 of 5?
+		if(Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development")
+		{
+			req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+		}
+		
+		return proxyResponse;
 	}
 
 	// takes 'url', 'months' and 'contains' query parameters
@@ -89,7 +97,8 @@ public class Proxy : Base
 		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("url"));
 		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
-		var nextEvents = await GetNextEvents(urlString, containsFilters, months);
+		(var nextEvents, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
+		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
 		var result = JsonSerializer.Serialize(nextEvents);
 
 		var proxyResponse = new ContentResult

@@ -22,15 +22,15 @@ public static class HtmlConverter
         return sw.ToString();
     }
 
-    private static void ConvertContentTo(HtmlNode node, TextWriter outText)
+    private static void ConvertContentTo(HtmlNode node, TextWriter outText, int listDepth = 0)
     {
         foreach (HtmlNode subnode in node.ChildNodes)
         {
-            ConvertTo(subnode, outText);
+            ConvertTo(subnode, outText, listDepth);
         }
     }
 
-    private static void ConvertTo(HtmlNode node, TextWriter outText)
+    private static void ConvertTo(HtmlNode node, TextWriter outText, int listDepth = 0)
     {
         string html;
         switch (node.NodeType)
@@ -40,7 +40,7 @@ public static class HtmlConverter
                 break;
 
             case HtmlNodeType.Document:
-                ConvertContentTo(node, outText);
+                ConvertContentTo(node, outText, listDepth);
                 break;
 
             case HtmlNodeType.Text:
@@ -60,20 +60,25 @@ public static class HtmlConverter
                 break;
 
             case HtmlNodeType.Element:
+                int nextListDepth = listDepth;
                 switch (node.Name)
                 {
                     case "p":
                     case "br":
                         outText.Write("\r\n");
                         break;
+                    case "ul":
+                    case "ol":
+                        nextListDepth++; // Increment depth for nested lists
+                        break;
                     case "li":
-                        outText.Write("• ");
+                        outText.Write("\r\n" + new string('\t', listDepth) + "• ");
                         break;
                 }
 
                 if (node.HasChildNodes)
                 {
-                    ConvertContentTo(node, outText);
+                    ConvertContentTo(node, outText, nextListDepth);
                 }
                 break;
         }
