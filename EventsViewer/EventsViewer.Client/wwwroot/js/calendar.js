@@ -1,9 +1,24 @@
 import ICAL from "https://unpkg.com/ical.js/dist/ical.min.js";
 // https://fullcalendar.io/docs/initialize-es6
-import { Calendar } from 'https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.20/dist/index.esm.js';
-import dayGridPlugin from 'https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.20/dist/index.esm.js';
-import timeGridPlugin from 'https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.20/dist/index.esm.js';
-// import timeGridPlugin from 'https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.20/index.js';
+import { Calendar } from '@fullcalendar/core'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+// import interactionPlugin from '@fullcalendar/interaction'
+// import listPlugin from '@fullcalendar/list'
+
+// Example:
+// document.addEventListener('DOMContentLoaded', function() {
+//         const calendarEl = document.getElementById('calendar')
+//         const calendar = new Calendar(calendarEl, {
+//           plugins: [dayGridPlugin],
+//           headerToolbar: {
+//             left: 'prev,next today',
+//             center: 'title',
+//             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+//           }
+//         })
+//         calendar.render()
+//       })
 
 window.calendarInterop = {
   init: function (elementId) {
