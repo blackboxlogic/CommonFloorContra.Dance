@@ -34,13 +34,13 @@ window.calendarInterop = {
         },
         events: function(fetchInfo, successCallback, failureCallback) {
           const proxyUrl = window.appConfig.proxyUrl;
-          fetch('data/dances.json')
+          fetch('https://www.trycontra.com/dances_locs.json')
             .then(response => response.json())
             .then(dances => {
               const promises = dances
+                .filter(dance => dance.city.endsWith(' ME'))
                 .filter(dance => dance.icals)
                 .flatMap(dance => dance.icals)
-                .slice(0, 5)
                 .map(url => fetch(proxyUrl + encodeURIComponent(url)).then(response => {
                   if (!response.ok) {
                     throw new Error('Bad response: ' + url + ' Status: ' + response.status + ' Status Text: ' + response.statusText);

@@ -54,9 +54,9 @@ public class Proxy : Base
 
 		bool isGoogleDoc = uri.Host.Equals("docs.google.com", StringComparison.OrdinalIgnoreCase);
 		bool isGoogleCalendar = uri.Host.Equals("calendar.google.com", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.Contains("/ical");
-		bool looksLikeOtherCalendar = uri.AbsolutePath.EndsWith(".ics", StringComparison.OrdinalIgnoreCase)
-			|| uri.AbsolutePath.Contains("ical", StringComparison.OrdinalIgnoreCase)
-			|| uri.AbsolutePath.Contains("calendar", StringComparison.OrdinalIgnoreCase);
+		bool looksLikeOtherCalendar = uri.AbsoluteUri.EndsWith(".ics", StringComparison.OrdinalIgnoreCase)
+			|| uri.AbsoluteUri.Contains("ical", StringComparison.OrdinalIgnoreCase)
+			|| uri.AbsoluteUri.Contains("calendar", StringComparison.OrdinalIgnoreCase);
 
 		if (!isGoogleDoc && !isGoogleCalendar && !looksLikeOtherCalendar)
 		{
