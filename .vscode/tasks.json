@@ -69,7 +69,8 @@
 		},
 		{
 			"type": "func",
-			"dependsOn": "build (functions)",
+			"label": "func: host start",
+			"dependsOn": ["kill-func", "build (functions)"],
 			"options": {
 				"cwd": "${workspaceFolder}/ProxyByRegex/bin/Debug/net8.0"
 			},
@@ -83,6 +84,49 @@
 						"args": [ "/c" ]
 					}
 				}
+			}
+		}, {
+			"label": "kill-func",
+			"command": "taskkill",
+			"args": [
+				"/F",
+				"/IM",
+				"func.exe"
+			],
+			"type": "process",
+			"problemMatcher": []
+		},
+		{
+			"label": "clean (EventsViewer)",
+			"command": "dotnet",
+			"args": [
+				"clean",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"problemMatcher": "$msCompile",
+			"options": {
+				"cwd": "${workspaceFolder}/EventsViewer/EventsViewer"
+			}
+		},
+		{
+			"label": "build (EventsViewer)",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"dependsOn": "clean (EventsViewer)",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": "$msCompile",
+			"options": {
+				"cwd": "${workspaceFolder}/EventsViewer/EventsViewer"
 			}
 		}
 	]

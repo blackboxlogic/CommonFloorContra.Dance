@@ -1,0 +1,16 @@
+{
+    "azureFunctions.deploySubpath": "ProxyByRegex/bin/Release/net8.0/publish",
+    "azureFunctions.projectLanguage": "C#",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "publish (functions)",
+
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=833922
+    "files.autoSave": "afterDelay",
+    "files.autoReload": "onFocus",
+
+    // Corrects an issue in your tasks.json
+    //"json.schemas": [],
+
+    "azureFunctions.projectSubpath": "ProxyByRegex"
+}

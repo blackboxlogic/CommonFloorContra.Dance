@@ -6,6 +6,25 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:azureFunctions.pickProcess}"
+        },
+        {
+            "name": "Launch EventsViewer",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (EventsViewer)",
+            "program": "${workspaceFolder}/EventsViewer/EventsViewer/bin/Debug/net8.0/EventsViewer.dll",
+            "cwd": "${workspaceFolder}/EventsViewer/EventsViewer",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
         }
     ]
 }

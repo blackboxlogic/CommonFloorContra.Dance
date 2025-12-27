@@ -1,0 +1,13 @@
+@inject IJSRuntime JSRuntime
+<h3>Calendar Component</h3>
+<div id="calendar"></div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("calendarInterop.init", "calendar");
+        }
+    }
+}
