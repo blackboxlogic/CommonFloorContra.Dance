@@ -1,6 +1,69 @@
-<h3>Filter Component</h3>
+<h3>Filters</h3>
+@* Example filters
+Series state in [ME, NT, VT]
+summary or description contains "contra"
+Red background if summary or description contains "Band TBD" *@
+
+
+<div class="form-group">
+    <details>
+        <summary>Filtered States: @(SelectedStates.Length == AllStates.Count ? "All" : SelectedStates.Length == 0 ? "None" : string.Join(", ", SelectedStates.Select(s => AllStates[s])))</summary>
+        <button class="btn btn-secondary btn-sm" @onclick="SelectAllStates">All</button>
+        <button class="btn btn-secondary btn-sm" @onclick="DeselectAllStates">None</button>
+        <div class="state-checkbox-group" style="height: 200px; overflow-y: scroll; border: 1px solid #ced4da; padding: .375rem .75rem; border-radius: .25rem;">
+            @foreach (var state in AllStates.OrderBy(s => s.Value))
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="@state.Key" id="state-@state.Key"
+                        checked="@(SelectedStates.Contains(state.Key))"
+                        @onchange="@(() => OnStateChanged(state.Key))" />
+                    <label class="form-check-label" for="state-@state.Key">
+                        @state.Value
+                    </label>
+                </div>
+            }
+        </div>
+    </details>
+</div>
+
 
 
 @code {
+    private string[] SelectedStates { get; set; } = new[] { "ME" };
 
+    private void OnStateChanged(string state)
+    {
+        if (SelectedStates.Contains(state))
+        {
+            SelectedStates = SelectedStates.Where(s => s != state).ToArray();
+        }
+        else
+        {
+            SelectedStates = SelectedStates.Append(state).ToArray();
+        }
+    }
+
+    private void SelectAllStates()
+    {
+        SelectedStates = AllStates.Keys.ToArray();
+    }
+
+    private void DeselectAllStates()
+    {
+        SelectedStates = Array.Empty<string>();
+    }
+
+    private readonly Dictionary<string, string> AllStates = new()
+    {
+        {"AL", "Alabama"}, {"AK", "Alaska"}, {"AZ", "Arizona"}, {"AR", "Arkansas"}, {"CA", "California"},
+        {"CO", "Colorado"}, {"CT", "Connecticut"}, {"DE", "Delaware"}, {"FL", "Florida"}, {"GA", "Georgia"},
+        {"HI", "Hawaii"}, {"ID", "Idaho"}, {"IL", "Illinois"}, {"IN", "Indiana"}, {"IA", "Iowa"},
+        {"KS", "Kansas"}, {"KY", "Kentucky"}, {"LA", "Louisiana"}, {"ME", "Maine"}, {"MD", "Maryland"},
+        {"MA", "Massachusetts"}, {"MI", "Michigan"}, {"MN", "Minnesota"}, {"MS", "Mississippi"}, {"MO", "Missouri"},
+        {"MT", "Montana"}, {"NE", "Nebraska"}, {"NV", "Nevada"}, {"NH", "New Hampshire"}, {"NJ", "New Jersey"},
+        {"NM", "New Mexico"}, {"NY", "New York"}, {"NC", "North Carolina"}, {"ND", "North Dakota"}, {"OH", "Ohio"},
+        {"OK", "Oklahoma"}, {"OR", "Oregon"}, {"PA", "Pennsylvania"}, {"RI", "Rhode Island"}, {"SC", "South Carolina"},
+        {"SD", "South Dakota"}, {"TN", "Tennessee"}, {"TX", "Texas"}, {"UT", "Utah"}, {"VT", "Vermont"},
+        {"VA", "Virginia"}, {"WA", "Washington"}, {"WV", "West Virginia"}, {"WI", "Wisconsin"}, {"WY", "Wyoming"}
+    };
 }

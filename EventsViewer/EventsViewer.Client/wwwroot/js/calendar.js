@@ -17,9 +17,13 @@ import tippy from 'tippy.js';
     "lng": -105.94,
     "url": "http://folkmads.org/events/santa-fe-events/",
     "weekdays": "Saturdays"
-  },
-*/
+  }
 
+  I've added, during processing:
+  - color: string (a color derived from the url)
+  - state: string (the state code, e.g., "ME")
+  - icalString: string (the fetched iCal data as a string)
+*/
 
 function loadCss(href) {
     if (!document.querySelector(`link[href="${href}"]`)) {
@@ -71,6 +75,7 @@ window.calendarInterop = {
 
               filteredDances.forEach(dance => {
                 dance.color = stringToColor(dance.url);
+                dance.state = dance.city.split(' ').pop();
               });
 
               const promises = filteredDances.map(dance =>
