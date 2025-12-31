@@ -1,23 +1,51 @@
-import ICAL from "https://unpkg.com/ical.js/dist/ical.min.js";
+import ICAL from "@ical.js";
 // https://fullcalendar.io/docs/initialize-es6
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
-// import listPlugin from '@fullcalendar/list'
+import tippy from 'tippy.js';
 
-// Example:
-// document.addEventListener('DOMContentLoaded', function() {
-//         const calendarEl = document.getElementById('calendar')
-//         const calendar = new Calendar(calendarEl, {
-//           plugins: [dayGridPlugin],
-//           headerToolbar: {
-//             left: 'prev,next today',
-//             center: 'title',
-//             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-//           }
-//         })
-//         calendar.render()
-//       })
+// An example dance series (I'm using url like name):
+/*
+  {
+    "annual_freq": 24,
+    "city": "Santa Fe NM",
+    "icals": [
+      "https://calendar.google.com/calendar/ical/folkmads@gmail.com/public/basic.ics"
+    ],
+    "lat": 35.69,
+    "lng": -105.94,
+    "url": "http://folkmads.org/events/santa-fe-events/",
+    "weekdays": "Saturdays"
+  },
+*/
+
+
+function loadCss(href) {
+    if (!document.querySelector(`link[href="${href}"]`)) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild(link);
+    }
+}
+
+function stringToColor(str) {
+  if (!str) return '#3788d8'; // Default color if string is null or empty
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    let value = (hash >> (i * 8)) & 0xFF;
+    color += ('00' + value.toString(16)).substr(-2);
+  }
+  return color;
+}
+
+loadCss('https://unpkg.com/tippy.js@6/dist/tippy.css');
+loadCss('https://unpkg.com/tippy.js@6/themes/light-border.css');
 
 window.calendarInterop = {
   init: function (elementId) {
@@ -36,43 +64,61 @@ window.calendarInterop = {
           fetch('https://www.trycontra.com/dances_locs.json')
             .then(response => response.json())
             .then(dances => {
-              const promises = dances
+              const filteredDances = dances
                 .filter(dance => dance.city.endsWith(' ME'))
-                .filter(dance => dance.icals)
-                .flatMap(dance => dance.icals)
-                .map(url => fetch(proxyUrl + encodeURIComponent(url)).then(response => {
-                  if (!response.ok) {
-                    throw new Error('Bad response: ' + url + ' Status: ' + response.status + ' Status Text: ' + response.statusText);
-                  }
-                  return response.text();
-                }));
+                .filter(dance => dance.inactive !== 'true')
+                .filter(dance => dance.icals);
+
+              filteredDances.forEach(dance => {
+                dance.color = stringToColor(dance.url);
+              });
+
+              const promises = filteredDances.map(dance =>
+                fetch(proxyUrl + encodeURIComponent(dance.icals[0]))
+                  .then(response => {
+                    if (response.ok) {
+                      return response.text().then(text => {
+                        dance.icalString = text;
+                        return dance;
+                      });
+                    } else {
+                      console.warn(`Failed to fetch ical for ${dance.url}`);
+                      return dance; // still return dance so we don't have gaps in the promise array
+                    }
+                  })
+              );
 
               Promise.all(promises)
-                .then(icalStrings => {
+                .then(dancesWithIcal => {
                   let events = [];
-                  icalStrings.forEach(icalString => {
-                    if (icalString) {
+                  dancesWithIcal.forEach(dance => {
+                    if (dance.icalString) {
                         try {
-                            const jcalData = ICAL.parse(icalString);
+                            const jcalData = ICAL.parse(dance.icalString);
                             const component = new ICAL.Component(jcalData);
                             const vevents = component.getAllSubcomponents('vevent');
                             vevents.forEach(vevent => {
                                 const event = new ICAL.Event(vevent);
-                                // TODO: add event filtering here
-                                if (event.summary) { // Only add events with a title
+                                // TODO: add better event filtering
+                                if (event.summary && event.summary.toLowerCase().includes("contra")
+                                || event.description && event.description.toLowerCase().includes("contra")
+                                || true) {
                                   events.push({
                                       title: event.summary,
                                       start: event.startDate.toJSDate(),
                                       end: event.endDate.toJSDate(),
+                                      backgroundColor: dance.color || '#3788d8',
+                                      borderColor: dance.color || '#3788d8',
                                       extendedProps: {
                                         location: event.location,
-                                        description: event.description
+                                        description: event.description,
+                                        series: dance.url
                                       }
                                   });
                                 }
                             });
                         } catch (e) {
-                            console.error('Error parsing iCal string:', e);
+                            console.error('Error parsing iCal string for ' + dance.url, e, dance.icalString);
                         }
                     }
                   });
@@ -88,16 +134,32 @@ window.calendarInterop = {
                 failureCallback(error);
             });
         },
-        eventClick: function(info) {
+        eventDidMount: function(info) {
           var event = info.event;
           var description = event.extendedProps.description || 'No description available.';
           var location = event.extendedProps.location || 'No location available.';
-          var content = 'Title: ' + event.title + '\n' +
-                        'Start: ' + event.start.toLocaleString() + '\n' +
-                        'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '\n' +
-                        'Location: ' + location + '\n' +
+          var content = '<b>' + event.title + '</b><br>' +
+                        'Start: ' + event.start.toLocaleString() + '<br>' +
+                        'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '<br>' +
+                        'Location: <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(location) + '" target="_blank" rel="noopener noreferrer">' + location + '</a><br>' +
+                        'Series: <a href="' + event.extendedProps.series + '" target="_blank" rel="noopener noreferrer">' + (event.extendedProps.series || '').replace(/^https?:\/\//, '') + '</a><br>' +
                         'Description: ' + description;
-          alert(content);
+        
+          tippy(info.el, {
+            content: content,
+            allowHTML: true, // Allow HTML content in the tooltip
+            trigger: 'click', // How the tooltip is triggered. Can be 'mouseenter focus', 'click', 'manual'
+            placement: 'auto', // Preferred placement. E.g., 'top', 'bottom', 'left', 'right'. 'auto' is default.
+            arrow: true, // Show an arrow pointing to the element
+            theme: 'light-border', // Theme for the tooltip. Tippy comes with 'dark', 'light', 'light-border', 'translucent'
+            interactive: true, // Allows the user to hover over and click inside the tooltip
+            // --- Other useful properties ---
+            // delay: [100, 200], // Delay in milliseconds to show and hide the tooltip [show, hide]
+            // duration: [250, 200], // Duration of the show and hide animations
+            // animation: 'scale', // Animation type. E.g., 'shift-away', 'shift-toward', 'scale', 'fade'
+            // onShow(instance) { /* Code to run before the tooltip shows */ },
+            // onHidden(instance) { /* Code to run after the tooltip has hidden */ },
+          });
         }
       });
       calendar.render();
