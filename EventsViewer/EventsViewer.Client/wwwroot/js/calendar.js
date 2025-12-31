@@ -91,10 +91,10 @@ window.calendarInterop = {
               Promise.all(promises)
                 .then(dancesWithIcal => {
                   let events = [];
-                  dancesWithIcal.forEach(dance => {
-                    if (dance.icalString) {
+                  dancesWithIcal.forEach(danceSeries => {
+                    if (danceSeries.icalString) {
                         try {
-                            const jcalData = ICAL.parse(dance.icalString);
+                            const jcalData = ICAL.parse(danceSeries.icalString);
                             const component = new ICAL.Component(jcalData);
                             const vevents = component.getAllSubcomponents('vevent');
                             vevents.forEach(vevent => {
@@ -107,18 +107,18 @@ window.calendarInterop = {
                                       title: event.summary,
                                       start: event.startDate.toJSDate(),
                                       end: event.endDate.toJSDate(),
-                                      backgroundColor: dance.color || '#3788d8',
-                                      borderColor: dance.color || '#3788d8',
+                                      backgroundColor: danceSeries.color || '#3788d8',
+                                      borderColor: danceSeries.color || '#3788d8',
                                       extendedProps: {
                                         location: event.location,
                                         description: event.description,
-                                        series: dance.url
+                                        danceSeries: danceSeries
                                       }
                                   });
                                 }
                             });
                         } catch (e) {
-                            console.error('Error parsing iCal string for ' + dance.url, e, dance.icalString);
+                            console.error('Error parsing iCal string for ' + danceSeries.url, e, danceSeries.icalString);
                         }
                     }
                   });
@@ -136,14 +136,14 @@ window.calendarInterop = {
         },
         eventDidMount: function(info) {
           var event = info.event;
-          var description = event.extendedProps.description || 'No description available.';
-          var location = event.extendedProps.location || 'No location available.';
           var content = '<b>' + event.title + '</b><br>' +
                         'Start: ' + event.start.toLocaleString() + '<br>' +
                         'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '<br>' +
-                        'Location: <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(location) + '" target="_blank" rel="noopener noreferrer">' + location + '</a><br>' +
-                        'Series: <a href="' + event.extendedProps.series + '" target="_blank" rel="noopener noreferrer">' + (event.extendedProps.series || '').replace(/^https?:\/\//, '') + '</a><br>' +
-                        'Description: ' + description;
+                        (event.extendedProps.location ?
+                          'Location: <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.extendedProps.location) + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.location + '</a><br>'
+                          : 'Location: <i>Not specified</i><br>') +
+                        'Series: <a href="' + event.extendedProps.danceSeries.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.danceSeries.url.replace(/^https?:\/\//, '') + '</a><br>' +
+                        'Description: ' + event.extendedProps.description || '<i>Not specified</i>';
         
           tippy(info.el, {
             content: content,
