@@ -4,9 +4,9 @@ VisualStudioVersion = 17.14.36429.23 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProxyByRegex", "ProxyByRegex\ProxyByRegex.csproj", "{A3F49187-DC6F-4999-883C-5B81E4F69059}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsViewer", "EventsViewer\EventsViewer\EventsViewer.csproj", "{64218769-BE34-49BA-B555-55E22409261D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsViewer", "EventsViewer\EventsViewer.csproj", "{64218769-BE34-49BA-B555-55E22409261D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsViewer.Client", "EventsViewer\EventsViewer.Client\EventsViewer.Client.csproj", "{001732AD-F438-403A-B2EA-D7CCDB10583E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsViewer.Client", "EventsViewer.Client\EventsViewer.Client.csproj", "{001732AD-F438-403A-B2EA-D7CCDB10583E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

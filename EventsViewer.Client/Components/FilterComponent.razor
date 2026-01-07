@@ -7,7 +7,7 @@ Red background if summary or description contains "Band TBD" *@
 
 <div class="form-group">
     <details>
-        <summary>Filtered States: @(SelectedStates.Length == AllStates.Count ? "All" : SelectedStates.Length == 0 ? "None" : string.Join(", ", SelectedStates.Select(s => AllStates[s])))</summary>
+        <summary>Selected States: @(SelectedStates.Length == AllStates.Count ? "All" : SelectedStates.Length == 0 ? "None" : string.Join(", ", SelectedStates.Select(s => AllStates[s])))</summary>
         <button class="btn btn-secondary btn-sm" @onclick="SelectAllStates">All</button>
         <button class="btn btn-secondary btn-sm" @onclick="DeselectAllStates">None</button>
         <div class="state-checkbox-group" style="height: 200px; overflow-y: scroll; border: 1px solid #ced4da; padding: .375rem .75rem; border-radius: .25rem;">

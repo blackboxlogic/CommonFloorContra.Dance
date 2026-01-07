@@ -10,4 +10,9 @@
             await JSRuntime.InvokeVoidAsync("calendarInterop.init", "calendar");
         }
     }
+
+    @* public async Task UpdateCalendar(string[] states)
+    {
+        await JSRuntime.InvokeVoidAsync("calendarInterop.update", states);
+    } *@
 }
