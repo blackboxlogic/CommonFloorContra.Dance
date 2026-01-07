@@ -22,7 +22,6 @@ import tippy from 'tippy.js';
   I've added, during processing:
   - color: string (a color derived from the url)
   - state: string (the state code, e.g., "ME")
-  - icalString: string (the fetched iCal data as a string)
 */
 
 function loadCss(href) {
@@ -50,6 +49,48 @@ function stringToColor(str) {
 
 loadCss('https://unpkg.com/tippy.js@6/dist/tippy.css');
 loadCss('https://unpkg.com/tippy.js@6/themes/light-border.css');
+const proxyUrl = window.appConfig.proxyUrl;
+
+async function loadOrganizations()
+{
+  var response = await fetch('https://www.trycontra.com/dances_locs.json');
+  var organizations = await response.json();
+
+  const organizationsEventsPromises = organizations
+    .filter(org => org.inactive !== 'true'
+        && org.icals
+        && org.city.split(' ').pop() === 'ME')
+    .map(async org => {
+      org.color = stringToColor(org.url);
+      org.state = org.city.split(' ').pop();
+      // TODO handle multiple iCals
+      org.icalUrl = org.icals[0];
+
+      // Fetch ical
+      var response = await fetch(proxyUrl + encodeURIComponent(org.icalUrl));
+
+      if (response.ok) {
+        return response.text().then(icalString => {
+          // Parse ical
+          // TODO add error handling for parsing
+          const jcalData = ICAL.parse(icalString);
+          const component = new ICAL.Component(jcalData);
+          const vevents = component.getAllSubcomponents('vevent');
+          org.vevents = vevents.map(vevent => new ICAL.Event(vevent));
+          return org;
+        });
+      } else {
+        console.warn(`Failed to fetch ical for ${org.url}`);
+        return org;
+      }
+
+      return org;
+    });
+
+    return organizationsEventsPromises;
+}
+
+const OrganizationsEventsPromises = loadOrganizations();
 
 window.calendarInterop = {
   init: function (elementId) {
@@ -63,82 +104,38 @@ window.calendarInterop = {
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        events: function(fetchInfo, successCallback, failureCallback) {
-          const proxyUrl = window.appConfig.proxyUrl;
-          fetch('https://www.trycontra.com/dances_locs.json')
-            .then(response => response.json())
-            .then(dances => {
-              const filteredDances = dances
-                .filter(dance => dance.city.endsWith(' ME'))
-                .filter(dance => dance.inactive !== 'true')
-                .filter(dance => dance.icals);
+        events: async function(fetchInfo, successCallback, failureCallback) {
 
-              filteredDances.forEach(dance => {
-                dance.color = stringToColor(dance.url);
-                dance.state = dance.city.split(' ').pop();
-              });
+          const organizations = await Promise.all(await OrganizationsEventsPromises);
+          let events = [];
 
-              const promises = filteredDances.map(dance =>
-                fetch(proxyUrl + encodeURIComponent(dance.icals[0]))
-                  .then(response => {
-                    if (response.ok) {
-                      return response.text().then(text => {
-                        dance.icalString = text;
-                        return dance;
-                      });
-                    } else {
-                      console.warn(`Failed to fetch ical for ${dance.url}`);
-                      return dance; // still return dance so we don't have gaps in the promise array
-                    }
-                  })
-              );
-
-              Promise.all(promises)
-                .then(dancesWithIcal => {
-                  let events = [];
-                  dancesWithIcal.forEach(danceSeries => {
-                    if (danceSeries.icalString) {
-                        try {
-                            const jcalData = ICAL.parse(danceSeries.icalString);
-                            const component = new ICAL.Component(jcalData);
-                            const vevents = component.getAllSubcomponents('vevent');
-                            vevents.forEach(vevent => {
-                                const event = new ICAL.Event(vevent);
-                                // TODO: add better event filtering
-                                if (event.summary && event.summary.toLowerCase().includes("contra")
-                                || event.description && event.description.toLowerCase().includes("contra")
-                                || true) {
-                                  events.push({
-                                      title: event.summary,
-                                      start: event.startDate.toJSDate(),
-                                      end: event.endDate.toJSDate(),
-                                      backgroundColor: danceSeries.color || '#3788d8',
-                                      borderColor: danceSeries.color || '#3788d8',
-                                      extendedProps: {
-                                        location: event.location,
-                                        description: event.description,
-                                        danceSeries: danceSeries
-                                      }
-                                  });
-                                }
-                            });
-                        } catch (e) {
-                            console.error('Error parsing iCal string for ' + danceSeries.url, e, danceSeries.icalString);
-                        }
-                    }
+          organizations.filter(org => org.vevents)
+          .forEach(org => {
+            // TODO Add each Org an a separate event source to allow toggling visibility
+            org.vevents.forEach(vevent => {
+                const event = new ICAL.Event(vevent);
+                // TODO: better event filtering
+                if (event.summary && event.summary.toLowerCase().includes("contra")
+                || event.description && event.description.toLowerCase().includes("contra")
+                || true) {
+                  events.push({
+                      title: event.summary,
+                      start: event.startDate.toJSDate(),
+                      end: event.endDate.toJSDate(),
+                      backgroundColor: danceSeries.color || '#3788d8',
+                      borderColor: danceSeries.color || '#3788d8',
+                      extendedProps: {
+                        location: event.location,
+                        description: event.description,
+                        danceSeries: danceSeries
+                      }
                   });
-                  successCallback(events);
-                })
-                .catch(error => {
-                    console.error('Error fetching iCal files:', error);
-                    failureCallback(error);
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching dances.json:', error);
-                failureCallback(error);
+                }
             });
+          });
+          successCallback(events);
         },
+
         eventDidMount: function(info) {
           var event = info.event;
           var content = '<b>' + event.title + '</b><br>' +
