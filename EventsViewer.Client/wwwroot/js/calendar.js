@@ -70,7 +70,21 @@ async function getEvents(org) {
         const icalData = ICAL.parse(icalString);
         const component = new ICAL.Component(icalData);
         const events = component.getAllSubcomponents('vevent');
-        return events.map(vevent => new ICAL.Event(vevent));
+        return events
+          .map(event => new ICAL.Event(event))
+          .map(event => ({
+            title: event.summary,
+            start: event.startDate.toJSDate(),
+            end: event.endDate.toJSDate(),
+            // backgroundColor: org.color || '#3788d8',
+            // borderColor: org.color || '#3788d8',
+            extendedProps: {
+              location: event.location,
+              description: event.description,
+              organization: org
+            }
+          })
+        );
       })
   );
 
@@ -88,7 +102,6 @@ async function loadOrganizations()
   organizations.forEach(async org => {
       org.color = stringToColor(org.url);
       org.state = org.city.split(' ').pop();
-      //org._events = [];
       if(org.icals) org.getEvents = () => getEvents(org);
     });
 
@@ -96,8 +109,32 @@ async function loadOrganizations()
 }
 const organizationsPromise = loadOrganizations();
 
+function orgToEventSource(org, eventFilter) {
+  return {
+    id: org.url,
+    backgroundColor: org.color,
+    borderColor: org.color,
+
+    events: async (fetchInfo, successCallback, failureCallback) => {
+      try {
+        const orgEvents = await org.getEvents();
+
+        const filtered = orgEvents
+          .filter(event =>
+            (event.title && event.title.toLowerCase().includes(eventFilter)) ||
+            (event.extendedProps.description && event.extendedProps.description.toLowerCase().includes(eventFilter))
+          );
+
+        successCallback(filtered);
+      } catch (err) {
+        failureCallback(err);
+      }
+    }
+  };
+}
+
 window.calendarInterop = {
-  init: function (elementId) {
+  init: async function (elementId) {
     var calendarEl = document.getElementById(elementId);
     if (calendarEl) {
       var calendar = new Calendar(calendarEl, {
@@ -107,39 +144,6 @@ window.calendarInterop = {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        events: async function(fetchInfo, successCallback, failureCallback) {
-
-          const organizations = await organizationsPromise;
-          let events = [];
-
-          await Promise.all(
-            organizations.filter(org => org.getEvents && org.state === 'ME')
-              .map(async org => {
-                const orgEvents = await org.getEvents();
-
-                const orgEventsFiltered = orgEvents
-                  .filter(event => event.summary && event.summary.toLowerCase().includes("contra")
-                    || event.description && event.description.toLowerCase().includes("contra"))
-                  .map(event => ({
-                      title: event.summary,
-                      start: event.startDate.toJSDate(),
-                      end: event.endDate.toJSDate(),
-                      backgroundColor: org.color || '#3788d8',
-                      borderColor: org.color || '#3788d8',
-                      extendedProps: {
-                        location: event.location,
-                        description: event.description,
-                        organization: org
-                      }
-                    })
-                  );
-
-                  events.push(...orgEventsFiltered); // todo add a new source instead.
-              }
-            ));
-
-          successCallback(events);
         },
 
         eventDidMount: function(info) {
@@ -170,7 +174,17 @@ window.calendarInterop = {
           });
         }
       });
+
       calendar.render();
+
+      const organizations = await organizationsPromise;
+
+      organizations
+        .filter(org => org.getEvents && org.state === 'ME')
+        .forEach(org => {
+          calendar.addEventSource(orgToEventSource(org, "contra"));
+        });
+
     }
   }
 };
