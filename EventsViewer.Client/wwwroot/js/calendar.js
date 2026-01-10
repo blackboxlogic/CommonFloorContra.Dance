@@ -112,25 +112,24 @@ window.calendarInterop = {
           organizations.filter(org => org.vevents)
           .forEach(org => {
             // TODO Add each Org an a separate event source to allow toggling visibility
-            org.vevents.forEach(vevent => {
-                const event = new ICAL.Event(vevent);
-                // TODO: better event filtering
-                if (event.summary && event.summary.toLowerCase().includes("contra")
-                || event.description && event.description.toLowerCase().includes("contra")
-                || true) {
-                  events.push({
-                      title: event.summary,
-                      start: event.startDate.toJSDate(),
-                      end: event.endDate.toJSDate(),
-                      backgroundColor: danceSeries.color || '#3788d8',
-                      borderColor: danceSeries.color || '#3788d8',
-                      extendedProps: {
-                        location: event.location,
-                        description: event.description,
-                        danceSeries: danceSeries
-                      }
-                  });
-                }
+            org.vevents.forEach(event => {
+	            // TODO: better event filtering
+	            if (event.summary && event.summary.toLowerCase().includes("contra")
+	            || event.description && event.description.toLowerCase().includes("contra")
+	            || true) {
+	              events.push({
+	                  title: event.summary,
+	                  start: event.startDate.toJSDate(),
+	                  end: event.endDate.toJSDate(),
+	                  backgroundColor: org.color || '#3788d8',
+	                  borderColor: org.color || '#3788d8',
+	                  extendedProps: {
+	                    location: event.location,
+	                    description: event.description,
+	                    organization: org
+	                  }
+	              });
+	            }
             });
           });
           successCallback(events);
@@ -144,7 +143,7 @@ window.calendarInterop = {
                         (event.extendedProps.location ?
                           'Location: <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.extendedProps.location) + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.location + '</a><br>'
                           : 'Location: <i>Not specified</i><br>') +
-                        'Series: <a href="' + event.extendedProps.danceSeries.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.danceSeries.url.replace(/^https?:\/\//, '') + '</a><br>' +
+                        'Series: <a href="' + event.extendedProps.organization.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.organization.url.replace(/^https?:\/\//, '') + '</a><br>' +
                         'Description: ' + event.extendedProps.description || '<i>Not specified</i>';
         
           tippy(info.el, {

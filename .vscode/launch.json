@@ -2,7 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch EventsViewer API",
+            "name": "Run API",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:azureFunctions.pickProcess}"
+        },
+        {
+            "name": "Run Viewer",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build (EventsViewer)",
@@ -19,29 +25,12 @@
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
             }
-        },
-        {
-            "name": "Launch EventsViewer Client with Hot Reload",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "watch (EventsViewer.Client)",
-            "program": "dotnet",
-            "args": ["watch", "--project", "${workspaceFolder}/EventsViewer.Client/EventsViewer.Client.csproj", "run"],
-            "cwd": "${workspaceFolder}/EventsViewer.Client",
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
         }
     ],
     "compounds": [
         {
-            "name": "Launch All",
-            "configurations": ["Launch EventsViewer API", "Launch EventsViewer Client with Hot Reload"]
+            "name": "Run All",
+            "configurations": ["Run API", "Run Viewer"]
         }
     ]
 }

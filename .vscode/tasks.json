@@ -128,32 +128,6 @@
             "options": {
                 "cwd": "${workspaceFolder}/EventsViewer"
             }
-        },
-        {
-            "label": "watch (EventsViewer.Client)",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/EventsViewer.Client/EventsViewer.Client.csproj"
-            ],
-            "problemMatcher": "$msCompile",
-            "isBackground": true,
-            "dependsOn": ["build (EventsViewer.Client)"]
-        },
-        {
-            "label": "build (EventsViewer.Client)",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/EventsViewer.Client/EventsViewer.Client.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
         }
     ]
 }
