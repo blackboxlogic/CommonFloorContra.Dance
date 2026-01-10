@@ -81,7 +81,11 @@ async function getEvents(org) {
             extendedProps: {
               location: event.location,
               description: event.description,
-              organization: org
+              organization: org,
+              id: event.uid,
+              recurrenceId: event.recurrenceId,
+              sequence: event.sequence,
+              originalColor: event.color
             }
           })
         );
@@ -148,7 +152,8 @@ window.calendarInterop = {
 
         eventDidMount: function(info) {
           var event = info.event;
-          var content = '<b>' + event.title + '</b><br>' +
+          var content = 'IDs: ' + event.extendedProps.id + '-' + event.extendedProps.recurrenceId + '-' + event.extendedProps.sequence  + '<br>' +
+                        '<b>' + event.title + '</b><br>' +
                         'Start: ' + event.start.toLocaleString() + '<br>' +
                         'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '<br>' +
                         (event.extendedProps.location ?
@@ -156,6 +161,10 @@ window.calendarInterop = {
                           : 'Location: <i>Not specified</i><br>') +
                         'Series: <a href="' + event.extendedProps.organization.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.organization.url.replace(/^https?:\/\//, '') + '</a><br>' +
                         'Description: ' + event.extendedProps.description || '<i>Not specified</i>';
+                        // TODO: links
+                        // add this event to your personal calendar
+                        // add this series to your personal calendar
+                        // add current event filter to your personal calendar
         
           tippy(info.el, {
             content: content,
@@ -178,12 +187,9 @@ window.calendarInterop = {
       calendar.render();
 
       const organizations = await organizationsPromise;
-
       organizations
-        .filter(org => org.getEvents && org.state === 'ME')
-        .forEach(org => {
-          calendar.addEventSource(orgToEventSource(org, "contra"));
-        });
+        .filter(org => org.getEvents && org.state === 'ME' && org.url.includes('surry'))
+        .forEach(org => calendar.addEventSource(orgToEventSource(org, "contra")));
 
     }
   }
