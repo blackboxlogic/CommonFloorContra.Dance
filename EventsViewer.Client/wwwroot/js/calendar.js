@@ -22,6 +22,8 @@ import tippy from 'tippy.js';
   I've added, during processing:
   - color: string (a color derived from the url)
   - state: string (the state code, e.g., "ME")
+  - _events: private storage of events once loaded
+  - getEvents: async function to load events, null if no ical urls.
 */
 
 function loadCss(href) {
@@ -51,46 +53,48 @@ loadCss('https://unpkg.com/tippy.js@6/dist/tippy.css');
 loadCss('https://unpkg.com/tippy.js@6/themes/light-border.css');
 const proxyUrl = window.appConfig.proxyUrl;
 
+async function getEvents(org) {
+  if(org._events) return org._events;
+
+  const responses = await Promise.all(
+    org.icals.map(icalUrl =>
+      fetch(proxyUrl + encodeURIComponent(icalUrl))
+    )
+  );
+
+  const eventArrays = await Promise.all(
+    responses
+      .filter(r => r.ok)
+      .map(async response => {
+        const icalString = await response.text();
+        const icalData = ICAL.parse(icalString);
+        const component = new ICAL.Component(icalData);
+        const events = component.getAllSubcomponents('vevent');
+        return events.map(vevent => new ICAL.Event(vevent));
+      })
+  );
+
+  org._events = eventArrays.flat();
+
+  return org._events;
+}
+
 async function loadOrganizations()
 {
   var response = await fetch('https://www.trycontra.com/dances_locs.json');
   var organizations = await response.json();
+  organizations = organizations.filter(org => org.inactive !== 'true' && org.icals);
 
-  const organizationsEventsPromises = organizations
-    .filter(org => org.inactive !== 'true'
-        && org.icals
-        && org.city.split(' ').pop() === 'ME')
-    .map(async org => {
+  organizations.forEach(async org => {
       org.color = stringToColor(org.url);
       org.state = org.city.split(' ').pop();
-      // TODO handle multiple iCals
-      org.icalUrl = org.icals[0];
-
-      // Fetch ical
-      var response = await fetch(proxyUrl + encodeURIComponent(org.icalUrl));
-
-      if (response.ok) {
-        return response.text().then(icalString => {
-          // Parse ical
-          // TODO add error handling for parsing
-          const jcalData = ICAL.parse(icalString);
-          const component = new ICAL.Component(jcalData);
-          const vevents = component.getAllSubcomponents('vevent');
-          org.vevents = vevents.map(vevent => new ICAL.Event(vevent));
-          return org;
-        });
-      } else {
-        console.warn(`Failed to fetch ical for ${org.url}`);
-        return org;
-      }
-
-      return org;
+      //org._events = [];
+      if(org.icals) org.getEvents = () => getEvents(org);
     });
 
-    return organizationsEventsPromises;
+    return organizations;
 }
-
-const OrganizationsEventsPromises = loadOrganizations();
+const organizationsPromise = loadOrganizations();
 
 window.calendarInterop = {
   init: function (elementId) {
@@ -106,32 +110,35 @@ window.calendarInterop = {
         },
         events: async function(fetchInfo, successCallback, failureCallback) {
 
-          const organizations = await Promise.all(await OrganizationsEventsPromises);
+          const organizations = await organizationsPromise;
           let events = [];
 
-          organizations.filter(org => org.vevents)
-          .forEach(org => {
-            // TODO Add each Org an a separate event source to allow toggling visibility
-            org.vevents.forEach(event => {
-	            // TODO: better event filtering
-	            if (event.summary && event.summary.toLowerCase().includes("contra")
-	            || event.description && event.description.toLowerCase().includes("contra")
-	            || true) {
-	              events.push({
-	                  title: event.summary,
-	                  start: event.startDate.toJSDate(),
-	                  end: event.endDate.toJSDate(),
-	                  backgroundColor: org.color || '#3788d8',
-	                  borderColor: org.color || '#3788d8',
-	                  extendedProps: {
-	                    location: event.location,
-	                    description: event.description,
-	                    organization: org
-	                  }
-	              });
-	            }
-            });
-          });
+          await Promise.all(
+            organizations.filter(org => org.getEvents && org.state === 'ME')
+              .map(async org => {
+                const orgEvents = await org.getEvents();
+
+                const orgEventsFiltered = orgEvents
+                  .filter(event => event.summary && event.summary.toLowerCase().includes("contra")
+                    || event.description && event.description.toLowerCase().includes("contra"))
+                  .map(event => ({
+                      title: event.summary,
+                      start: event.startDate.toJSDate(),
+                      end: event.endDate.toJSDate(),
+                      backgroundColor: org.color || '#3788d8',
+                      borderColor: org.color || '#3788d8',
+                      extendedProps: {
+                        location: event.location,
+                        description: event.description,
+                        organization: org
+                      }
+                    })
+                  );
+
+                  events.push(...orgEventsFiltered); // todo add a new source instead.
+              }
+            ));
+
           successCallback(events);
         },
 
