@@ -11,8 +11,12 @@
             "name": "Run Viewer",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build (EventsViewer)",
-            "program": "${workspaceFolder}/EventsViewer/bin/Debug/net8.0/EventsViewer.dll",
+            "program": "dotnet",
+            "args": [
+                "watch",
+                "--project",
+                "${workspaceFolder}/EventsViewer/EventsViewer.csproj"
+            ],
             "cwd": "${workspaceFolder}/EventsViewer",
             "stopAtEntry": false,
             "serverReadyAction": {
