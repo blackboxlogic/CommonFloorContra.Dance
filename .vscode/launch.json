@@ -2,18 +2,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to .NET Functions",
-            "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:azureFunctions.pickProcess}"
-        },
-        {
-            "name": "Launch EventsViewer",
+            "name": "Launch EventsViewer API",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build (EventsViewer)",
-            "program": "${workspaceFolder}/EventsViewer/EventsViewer/bin/Debug/net8.0/EventsViewer.dll",
-            "cwd": "${workspaceFolder}/EventsViewer/EventsViewer",
+            "program": "${workspaceFolder}/EventsViewer/bin/Debug/net8.0/EventsViewer.dll",
+            "cwd": "${workspaceFolder}/EventsViewer",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
@@ -25,6 +19,29 @@
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
             }
+        },
+        {
+            "name": "Launch EventsViewer Client with Hot Reload",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "watch (EventsViewer.Client)",
+            "program": "dotnet",
+            "args": ["watch", "--project", "${workspaceFolder}/EventsViewer.Client/EventsViewer.Client.csproj", "run"],
+            "cwd": "${workspaceFolder}/EventsViewer.Client",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch All",
+            "configurations": ["Launch EventsViewer API", "Launch EventsViewer Client with Hot Reload"]
         }
     ]
 }
