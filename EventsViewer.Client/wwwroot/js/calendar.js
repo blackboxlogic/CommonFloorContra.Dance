@@ -137,8 +137,8 @@ function orgToEventSource(org, eventFilter) {
 
         const filtered = orgEvents
           .filter(event =>
-            (event.title && event.title.toLowerCase().includes(eventFilter)) ||
-            (event.extendedProps.description && event.extendedProps.description.toLowerCase().includes(eventFilter))
+            (eventFilter === null || event.title && event.title.toLowerCase().includes(eventFilter.toLowerCase())) ||
+            (eventFilter === null || event.extendedProps.description && event.extendedProps.description.toLowerCase().includes(eventFilter.toLowerCase()))
           );
 
         successCallback(filtered);
@@ -164,15 +164,15 @@ window.calendarInterop = {
 
         eventDidMount: function(info) {
           var event = info.event;
-          var content = 'IDs: ' + event.extendedProps.id + '-' + event.extendedProps.recurrenceId + '-' + event.extendedProps.sequence  + '<br>' +
+          var content = //'IDs: ' + event.extendedProps.id + '-' + event.extendedProps.recurrenceId + '-' + event.extendedProps.sequence  + '<br>' +
                         '<b>' + event.title + '</b><br>' +
-                        'Start: ' + event.start.toLocaleString() + '<br>' +
-                        'End: ' + (event.end ? event.end.toLocaleString() : 'N/A') + '<br>' +
+                        '<b>Start:</b> ' + event.start.toLocaleString() + '<br>' +
+                        '<b>End:</b> ' + (event.end ? event.end.toLocaleString() : 'N/A') + '<br>' +
                         (event.extendedProps.location ?
-                          'Location: <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.extendedProps.location) + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.location + '</a><br>'
-                          : 'Location: <i>Not specified</i><br>') +
-                        'Series: <a href="' + event.extendedProps.organization.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.organization.url.replace(/^https?:\/\//, '') + '</a><br>' +
-                        'Description: ' + event.extendedProps.description || '<i>Not specified</i>';
+                          '<b>Location:</b> <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.extendedProps.location) + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.location + '</a><br>'
+                          : '<b>Location:</b> <i>Not specified</i><br>') +
+                        '<b>Series:</b> <a href="' + event.extendedProps.organization.url + '" target="_blank" rel="noopener noreferrer">' + event.extendedProps.organization.url.replace(/^https?:\/\//, '') + '</a><br>' +
+                        '<b>Description:</b> ' + event.extendedProps.description || '<i>Not specified</i>';
                         // TODO: links
                         // add this event to your personal calendar
                         // add this series to your personal calendar
@@ -196,12 +196,17 @@ window.calendarInterop = {
         }
       });
 
+      const urlParams = new URLSearchParams(window.location.search);
+      const stateFilter = urlParams.get('states');
+      const termFilter = urlParams.get('terms');
+
       const organizations = await organizationsPromise;
       organizations
-        .filter(org => org.getEvents && org.state === 'ME')
+        .filter(org => org.getEvents
+          && (stateFilter === null || stateFilter.toLowerCase().includes(org.state.toLowerCase())))
         //.filter(org => org.getEvents && org.state === 'ME' && (org.url.includes('surry') || org.url.includes('common')))
         //.forEach(org => { org.icals[0] = "http://localhost:5267/SurrySample.ics"; calendar.addEventSource(orgToEventSource(org, "contra"));});
-        .forEach(org => calendar.addEventSource(orgToEventSource(org, "contra")));
+        .forEach(org => calendar.addEventSource(orgToEventSource(org, termFilter)));
 
       calendar.render();
 
