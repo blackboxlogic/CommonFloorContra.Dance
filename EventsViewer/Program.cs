@@ -33,6 +33,7 @@ app.MapGet("/js/config.js", (IConfiguration config) =>
     return Results.Content($"window.appConfig = {{ proxyUrl: \"{proxyUrl}\" }};", "application/javascript");
 });
 
+app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
