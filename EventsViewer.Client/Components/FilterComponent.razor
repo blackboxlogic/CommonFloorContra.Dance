@@ -67,3 +67,21 @@ Red background if summary or description contains "Band TBD" *@
         {"VA", "Virginia"}, {"WA", "Washington"}, {"WV", "West Virginia"}, {"WI", "Wisconsin"}, {"WY", "Wyoming"}
     };
 }
+
+
+@* function applyFilter(state) {
+  // update UI + data
+}
+
+function setFilter(state) {
+  const url = new URL(location);
+  url.searchParams.set('state', state);
+
+  history.pushState({ state }, '', url); // or history.replaceState({ state }, '', url);
+  applyFilter(state);
+}
+
+window.addEventListener('popstate', () => {
+  const state = new URLSearchParams(location.search).get('state');
+  applyFilter(state);
+}); *@

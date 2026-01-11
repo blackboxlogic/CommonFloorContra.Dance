@@ -1,9 +1,19 @@
+// https://github.com/mifi/ical-expander because https://github.com/kewisch/ical.js/issues/285
+import IcalExpander from 'ical-expander';
+// https://github.com/kewisch/ical.js
 import ICAL from "@ical.js";
 // https://fullcalendar.io/docs/initialize-es6
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import tippy from 'tippy.js';
+
+loadCss('https://unpkg.com/tippy.js@6/dist/tippy.css');
+loadCss('https://unpkg.com/tippy.js@6/themes/light-border.css');
+const proxyUrl = window.appConfig.proxyUrl;
+
+const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+const twoYearsLater = new Date(); twoYearsLater.setFullYear(twoYearsLater.getFullYear() + 2);
 
 // An example dance series (I'm using url like name):
 /*
@@ -49,16 +59,12 @@ function stringToColor(str) {
   return color;
 }
 
-loadCss('https://unpkg.com/tippy.js@6/dist/tippy.css');
-loadCss('https://unpkg.com/tippy.js@6/themes/light-border.css');
-const proxyUrl = window.appConfig.proxyUrl;
-
 async function getEvents(org) {
   if(org._events) return org._events;
 
   const responses = await Promise.all(
     org.icals.map(icalUrl =>
-      fetch(proxyUrl + encodeURIComponent(icalUrl))
+      fetch(proxyUrl + encodeURIComponent(icalUrl)) // + '&cache=false'
     )
   );
 
@@ -67,28 +73,34 @@ async function getEvents(org) {
       .filter(r => r.ok)
       .map(async response => {
         const icalString = await response.text();
-        const icalData = ICAL.parse(icalString);
-        const component = new ICAL.Component(icalData);
-        const events = component.getAllSubcomponents('vevent');
-        return events
-          .map(event => new ICAL.Event(event))
-          .map(event => ({
-            title: event.summary,
-            start: event.startDate.toJSDate(),
-            end: event.endDate.toJSDate(),
-            // backgroundColor: org.color || '#3788d8',
-            // borderColor: org.color || '#3788d8',
+        const icalExpander = new IcalExpander({ ics: icalString, maxIterations: 100 });
+        const expanded = icalExpander.between(sixMonthsAgo, twoYearsLater);
+        const allEvents = expanded.events.map(e => ({
+            title: e.summary,
+            start: e.startDate.toJSDate(),
+            end: e.endDate.toJSDate(),
             extendedProps: {
-              location: event.location,
-              description: event.description,
-              organization: org,
-              id: event.uid,
-              recurrenceId: event.recurrenceId,
-              sequence: event.sequence,
-              originalColor: event.color
+                location: e.location,
+                description: e.description,
+                organization: org,
+                id: e.uid,
             }
-          })
-        );
+        }));
+
+        const allOccurrences = expanded.occurrences.map(o => ({
+            title: o.item.summary,
+            start: o.startDate.toJSDate(),
+            end: o.endDate.toJSDate(),
+            extendedProps: {
+                location: o.item.location,
+                description: o.item.description,
+                organization: org,
+                id: o.item.uid,
+                recurrenceId: o.recurrenceId.toString()
+            }
+        }));
+
+        return allEvents.concat(allOccurrences);
       })
   );
 
@@ -184,12 +196,14 @@ window.calendarInterop = {
         }
       });
 
-      calendar.render();
-
       const organizations = await organizationsPromise;
       organizations
-        .filter(org => org.getEvents && org.state === 'ME' && org.url.includes('surry'))
+        .filter(org => org.getEvents && org.state === 'ME')
+        //.filter(org => org.getEvents && org.state === 'ME' && (org.url.includes('surry') || org.url.includes('common')))
+        //.forEach(org => { org.icals[0] = "http://localhost:5267/SurrySample.ics"; calendar.addEventSource(orgToEventSource(org, "contra"));});
         .forEach(org => calendar.addEventSource(orgToEventSource(org, "contra")));
+
+      calendar.render();
 
     }
   }
