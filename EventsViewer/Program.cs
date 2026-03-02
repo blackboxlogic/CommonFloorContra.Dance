@@ -24,6 +24,7 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
@@ -33,10 +34,11 @@ app.MapGet("/js/config.js", (IConfiguration config) =>
     return Results.Content($"window.appConfig = {{ proxyUrl: \"{proxyUrl}\" }};", "application/javascript");
 });
 
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(EventsViewer.Client._Imports).Assembly);
+
+app.MapFallbackToFile("index.html");
 
 app.Run();

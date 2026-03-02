@@ -59,7 +59,27 @@ function stringToColor(str) {
   return color;
 }
 
-async function getEvents(org) {
+async function getOrgIcon(org) {
+  if(org._icon) return org._icon;
+
+  try {
+    const url = new URL(org.url);
+    const faviconUrl = url.origin + '/favicon.ico';
+    const response = await fetch(proxyUrl + encodeURIComponent(faviconUrl));
+    if (response.ok) {
+      const blob = await response.blob();
+      org._icon = URL.createObjectURL(blob);
+      return org._icon;
+    }
+  } catch (err) {
+    console.error('Error fetching icon for', org.url, err);
+  }
+
+  org._icon = null;
+  return null;
+}
+
+async function getOrgEvents(org) {
   if(org._events) return org._events;
 
   const responses = await Promise.all(
@@ -118,7 +138,8 @@ async function loadOrganizations()
   organizations.forEach(async org => {
       org.color = stringToColor(org.url);
       org.state = org.city.split(' ').pop();
-      if(org.icals) org.getEvents = () => getEvents(org);
+      if(org.icals) org.getEvents = () => getOrgEvents(org);
+      org.getIcon = () => getOrgIcon(org);
     });
 
     return organizations;
