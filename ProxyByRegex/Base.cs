@@ -59,7 +59,9 @@ public abstract class Base
 				startLocal = e.period.StartTime.Value,
 				endLocal = e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
 				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
-				summary = e.source.Summary ?? "",
+				summary = Configuration["Environment"] == "PROD"
+					? e.source.Summary ?? ""
+					: $"[{Configuration["Environment"]}] " + e.source.Summary ?? "",
 				// Might be HTML, might be plain text. Client should expect '\n' chars.
 				description = e.source.Description,
 				location = e.source.Location

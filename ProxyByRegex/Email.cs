@@ -31,19 +31,15 @@ public class Email : Base
 	{
 		try
 		{
-			//if (GetConfigOrThrow("Environment") == "PROD")
-			{
-				var seriesName = GetConfigOrThrow("SeriesName");
-				var seriesWebsite = GetConfigOrThrow("SeriesWebsite");
-				var calendarUrl = GetConfigOrThrow("CalendarUrl");
-				(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, [], 1);
-                //(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, ["contra"], 1);
-				var toAddress = new MailAddress(GetConfigOrThrow("EmailDestination"));
-				var fromAddress = new MailAddress(GetConfigOrThrow("GmailSender"), seriesName);
-				var fromAddressAppPassword = GetConfigOrThrow("GmailSenderAppPassword");
-				var emailSubject = $"{seriesName} - Upcoming Events";
-				await SendEmailFromGmail(calendarUrl, nextEvents, toAddress, fromAddress, fromAddressAppPassword, emailSubject, seriesName, seriesWebsite);
-			}
+			var seriesName = GetConfigOrThrow("SeriesName");
+			var seriesWebsite = GetConfigOrThrow("SeriesWebsite");
+			var calendarUrl = GetConfigOrThrow("SeriesCalendarUrl");
+			(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, [], 1);
+			var toAddress = new MailAddress(GetConfigOrThrow("SeriesEmailDestination"));
+			var fromAddress = new MailAddress(GetConfigOrThrow("SeriesGmailSender"), seriesName);
+			var fromAddressAppPassword = GetConfigOrThrow("SeriesGmailSenderAppPassword");
+			var emailSubject = $"{seriesName} - {DateTime.Now:MMMM} Events";
+			await SendEmailFromGmail(calendarUrl, nextEvents, toAddress, fromAddress, fromAddressAppPassword, emailSubject, seriesName, seriesWebsite);
 		}
 		catch (Exception ex)
 		{
