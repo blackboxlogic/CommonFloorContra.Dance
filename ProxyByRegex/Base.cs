@@ -60,9 +60,8 @@ public abstract class Base
 				endLocal = e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
 				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
 				summary = e.source.Summary ?? "",
-				// carrd has list-style:none on <ul>.
-				// TODO: maybe move this to carrd JS
-				description = e.source.Description?.Replace("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")?.Replace("<b>", "<b style='font-weight: bolder'>")?.Replace("\n", "<br>"),
+				// Might be HTML, might be plain text. Client should expect '\n' chars.
+				description = e.source.Description,
 				location = e.source.Location
 			})
 			.ToArray();

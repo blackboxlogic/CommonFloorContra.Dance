@@ -23,32 +23,22 @@ public class Email : Base
 	public async Task SendSampleEmailApi([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
 		Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
 	{
-		if (GetConfigOrThrow("Environment") == "DEV" || GetConfigOrThrow("Environment") == "TEST")
-		{
-			var seriesName = GetConfigOrThrow("SeriesName");
-			var seriesWebsite = GetConfigOrThrow("SeriesWebsite");
-			var calendarUrl = GetConfigOrThrow("CalendarUrl");
-			(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, ["contra"], 1);
-			var toAddress = new MailAddress(GetConfigOrThrow("MailchimpBeamerAddress"));
-			var fromAddress = new MailAddress(GetConfigOrThrow("GmailSender"), seriesName);
-			var fromAddressAppPassword = GetConfigOrThrow("GmailSenderAppPassword");
-			var emailSubject = $"{seriesName} - Upcoming Events";
-			await SendEmailFromGmail(calendarUrl, nextEvents, toAddress, fromAddress, fromAddressAppPassword, emailSubject, seriesName, seriesWebsite);
-		}
+		await SendSampleEmailTimer(new());
 	}
 
-	[Function("SendSampleEmailTimer")] // At 10:10 AM on day 1 of every month
-	public async Task SendSampleEmailTimer([TimerTrigger("0 10 10 1 * *")] TimerInfo myTimer)
+	[Function("SendSampleEmailTimer")] // At Noon-oh-five every 4th day of the month
+	public async Task SendSampleEmailTimer([TimerTrigger("0 05 17 4 * *")] TimerInfo myTimer)
 	{
 		try
 		{
-			if (GetConfigOrThrow("Environment") == "PROD")
+			//if (GetConfigOrThrow("Environment") == "PROD")
 			{
 				var seriesName = GetConfigOrThrow("SeriesName");
 				var seriesWebsite = GetConfigOrThrow("SeriesWebsite");
 				var calendarUrl = GetConfigOrThrow("CalendarUrl");
-				(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, ["contra"], 1);
-				var toAddress = new MailAddress(GetConfigOrThrow("MailchimpBeamerAddress"));
+				(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, [], 1);
+                //(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, ["contra"], 1);
+				var toAddress = new MailAddress(GetConfigOrThrow("EmailDestination"));
 				var fromAddress = new MailAddress(GetConfigOrThrow("GmailSender"), seriesName);
 				var fromAddressAppPassword = GetConfigOrThrow("GmailSenderAppPassword");
 				var emailSubject = $"{seriesName} - Upcoming Events";

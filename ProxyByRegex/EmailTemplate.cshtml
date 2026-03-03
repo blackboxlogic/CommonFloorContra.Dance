@@ -7,42 +7,36 @@
         <title>Upcoming Events: @Model.SeriesName</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-            body {
-                font-family: sans-serif;
-                font-size: 14px;
-                background-color: 
-            }
-            label {
-                font-weight: bold;
-            }
-            title {
-                font-size: 20px;
-                font-weight: bold;
-            }
-        </style>
     </head>
-    <body>
-        <h1><b>Upcoming Events:</b></h1>
-        <hr/>
+    <body style="font-family: sans-serif; font-size: 14px;">
+        <i>Upcoming Events:</i>
+        <hr>
         @foreach (var ev in Model.Events)
         {
-            <div class="event">
-                <div class="title">@ev.summary</div>
+            <div>
+                <h1 style="font-size: 20px; font-weight: bold;">@ev.summary</h1>
 
                 @if(ev.start.Date == ev.end.Date)
                 {
-                    <div><div class="label">When:</div> @ev.startLocal.ToString("MMMM d"), @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("h:mm tt")</div>
+                    <div><span style="font-weight: bold;">When:</span> @ev.startLocal.ToString("MMMM d"), @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("h:mm tt")</div>
                 }else{
-                    <div><div class="label">When:</div> @ev.startLocal.ToString("MMMM d") @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("MMMM d") @ev.endLocal.ToString("h:mm tt")</div>
+                    <div><span style="font-weight: bold;">When:</span> @ev.startLocal.ToString("MMMM d") @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("MMMM d") @ev.endLocal.ToString("h:mm tt")</div>
                 }
 
-                <div><div class="label">Where:</div> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
-                <div class="label">Details:</div>
-                <div>@Raw(ev.description)</div>
+                <div><span style="font-weight: bold;">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
+                <div style="font-weight: bold;">Details:</div>
+                <div>@Raw(ev.description?.Replace("\n", "<br>"))</div>
             </div>
-            <hr/>
+            <hr>
         }
-        <div class="label">More info on our website: <a href="@Model.SeriesWebsite">@Model.SeriesName</a> or <a href="@Model.CalendarUrl">get all our events on your calendar, always up to date.</a></div>
+        <div>
+            <span style="font-weight: bold;">More info:</span> Visit our website at <a href="@Model.SeriesWebsite">@Model.SeriesName</a>
+        </div>
+        <div style="margin-top: 10px;">
+            <span style="font-weight: bold;">Subscribe to our calendar (always up to date):</span><br/>
+            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl.Replace("https://", "webcal://").Replace("http://", "webcal://"))">Add to Google Calendar</a>
+            &nbsp;|&nbsp;
+            <a href="@Model.CalendarUrl.Replace("https://", "webcal://").Replace("http://", "webcal://")">Add to Outlook / Apple Calendar</a>
+        </div>
     </body>
 </html>
