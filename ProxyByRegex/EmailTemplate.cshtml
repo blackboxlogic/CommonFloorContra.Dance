@@ -1,42 +1,77 @@
 @using CalendarFunctions;
 @model Email.EmailModel
 
+@functions {
+    // Like "Sunday, March 3rd"
+    string FormatDate(DateTime dt)
+    {
+        int day = dt.Day;
+        string suffix = (day % 100 is 11 or 12 or 13) ? "th"
+            : (day % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };
+        return dt.ToString("dddd, MMMM ") + day + $"<sup>{suffix}</sup>";
+    }
+
+    // Like "3:20 pm" or "3 pm"
+    string FormatTime(DateTime dt)
+    {
+        return dt.Minute == 0
+            ? dt.ToString("htt").ToLower()
+            : dt.ToString("h:mmtt").ToLower();
+    }
+}
+
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Upcoming Events: @Model.SeriesName</title>
+        <title>@Model.Subject</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet" />
+        <style>
+            body { font-family: 'Lora', serif; font-size: 14px; }
+            .email-wrapper { border: 20px solid #00374A; padding: 0px; background-color: #CBF0FF; color: #00374A; }
+            .header { color: #CBF0FF; background-color: #00374A; padding: 16px; }
+            .header a { color: #CBF0FF; }
+            .header h1 { font-weight: bold; }
+            .header h1 img { height: 1em; vertical-align: middle; margin-right: 8px; }
+            .divider { background: #00374A; height: 16px; }
+            .event { margin-left: 10px; background-color: #CBF0FF; color: #00374A; padding: 16px; }
+            .event a { color: #00374A; }
+            .event-title { font-weight: bold; }
+            .event-description { margin-left: 10px; }
+            .label { font-weight: bold; }
+            .footer { color: #CBF0FF; background-color: #00374A; padding: 16px; }
+            .footer a { color: #CBF0FF; }
+        </style>
     </head>
-    <body style="font-family: sans-serif; font-size: 14px;">
-        <i>Upcoming Events:</i>
-        <hr>
+    <body>
+    <div class="email-wrapper">
+        <div class="header">
+            <h1><img src="@Model.FaviconUrl">@Model.Subject</h1>
+            Details about us, booking, volunteering, and all future events at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite</a>.
+            <span>Get all <i>our</i> events on <i>your</i> calendar (they'll stay updated <i>by magic</i>):</span>
+            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
+            These are our <b>@DateTime.Now.ToString("MMMM, yyyy") events:</b>
+            <br>
+        </div>
         @foreach (var ev in Model.Events)
         {
-            <div>
-                <h1 style="font-size: 20px; font-weight: bold;">@ev.summary</h1>
+            <div class="divider"/>
+            <div class="event">
+                <h2 class="event-title">@Raw(FormatDate(ev.startLocal)) ~ @ev.summary</h2>
 
-                @if(ev.start.Date == ev.end.Date)
-                {
-                    <div><span style="font-weight: bold;">When:</span> @ev.startLocal.ToString("MMMM d"), @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("h:mm tt")</div>
-                }else{
-                    <div><span style="font-weight: bold;">When:</span> @ev.startLocal.ToString("MMMM d") @ev.startLocal.ToString("h:mm tt") to @ev.endLocal.ToString("MMMM d") @ev.endLocal.ToString("h:mm tt")</div>
-                }
+                @{var endsSameDay = ev.startLocal.Date == ev.endLocal.Date || (ev.startLocal.Date.AddDays(1) == ev.endLocal.Date && ev.endLocal.Hour < 3);}
+                <div>
+                    <span class="label">When:</span>
+                    @* @Raw(FormatDate(ev.startLocal)),  *@@FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
+                </div>
 
-                <div><span style="font-weight: bold;">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
-                <div style="font-weight: bold;">Details:</div>
-                <div>@Raw(ev.description?.Replace("\n", "<br>"))</div>
+                <div><span class="label">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
+                <div class="label">Description:</div>
+                <div class="event-description">@Raw(ev.description?.Replace("\n", "<br>"))</div>
             </div>
-            <hr>
         }
-        <div>
-            <span style="font-weight: bold;">More info:</span> Visit our website at <a href="@Model.SeriesWebsite">@Model.SeriesName</a>
-        </div>
-        <div style="margin-top: 10px;">
-            <span style="font-weight: bold;">Subscribe to our calendar (always up to date):</span><br/>
-            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl.Replace("https://", "webcal://").Replace("http://", "webcal://"))">Add to Google Calendar</a>
-            &nbsp;|&nbsp;
-            <a href="@Model.CalendarUrl.Replace("https://", "webcal://").Replace("http://", "webcal://")">Add to Outlook / Apple Calendar</a>
-        </div>
+        <div class="footer">This email was composed by an experimental computer program which isn't self aware and lacks reasoning skill. Problem? Suggestion? Reply and the human author will see it.</div>
+    </div>
     </body>
 </html>

@@ -6,26 +6,19 @@ using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Calendar = Ical.Net.Calendar;
 
 namespace CalendarFunctions;
 
-public abstract class Base
+public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, IMemoryCache cache, IConfiguration configuration)
 {
 	internal static readonly Regex GoogleRedirectRegex = new("https://www\\.google\\.com/url\\?q=|&(amp;)?sa=D&(amp;)?source=editors&(amp;)?ust=\\d*&(amp;)?usg=[^\"]*", RegexOptions.Compiled);
 	internal static readonly Regex HtmlHeadElementRegex = new("<head>.*</head>", RegexOptions.Compiled | RegexOptions.Singleline);
-	internal readonly IHttpClientFactory HttpClientFactory;
-	internal readonly ILogger Logger;
-	internal readonly IMemoryCache Cache;
-	internal readonly Microsoft.Extensions.Configuration.IConfiguration Configuration;
-
-	public Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, IMemoryCache cache, Microsoft.Extensions.Configuration.IConfiguration configuration)
-	{
-		HttpClientFactory = httpClientFactory;
-		Logger = logger;
-		Cache = cache;
-		Configuration = configuration;
-	}
+	internal readonly IHttpClientFactory HttpClientFactory = httpClientFactory;
+	internal readonly ILogger Logger = logger;
+	internal readonly IMemoryCache Cache = cache;
+	internal readonly IConfiguration Configuration = configuration;
 
 	internal string GetConfigOrThrow(string key)
 	{
@@ -40,6 +33,11 @@ public abstract class Base
 		var end = start.AddMonths(months);
 		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
 
+		// get X-WR-TIMEZONE
+		var defaultTimeZoneLocation = cal.Properties["X-WR-TIMEZONE"]!.Value as string;
+		//var defaultTimeZone = cal.TimeZones.First(tz => tz.Location == defaultTimeZoneLocation);
+		var defaultTzi = TimeZoneInfo.FindSystemTimeZoneById(defaultTimeZoneLocation!);
+
 		var nextEvents = events
 			.OrderBy(e => e.Period.StartTime)
 			// source is the INITIAL reoccuring event
@@ -53,18 +51,21 @@ public abstract class Base
 			)
 			.Select(e => new DanceEvent()
 			{
-				// TODO: Test "all day" events, multi-day events, zero-duration events.
-				date = new DateTimeOffset(e.period.StartTime.AsUtc),
+				// TODO: Test "all day" events, multi-day events, zero-duration events, early morning, late night, night to morning.
 				start = new DateTimeOffset(e.period.StartTime.AsUtc),
-				startLocal = e.period.StartTime.Value,
-				endLocal = e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
 				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
+				// If the event time is UTC (no TzId or TzId=="UTC"), convert to the calendar's default timezone
+				startLocal = string.IsNullOrEmpty(e.period.StartTime.TzId) || e.period.StartTime.TzId == "UTC"
+					? TimeZoneInfo.ConvertTimeFromUtc(e.period.StartTime.AsUtc, defaultTzi)
+					: e.period.StartTime.Value,
+				endLocal = string.IsNullOrEmpty(e.period.EffectiveEndTime?.TzId) || e.period.EffectiveEndTime?.TzId == "UTC"
+					? TimeZoneInfo.ConvertTimeFromUtc(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc, defaultTzi)
+					: e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
 				summary = Configuration["Environment"] == "PROD"
 					? e.source.Summary ?? ""
 					: $"[{Configuration["Environment"]}] " + e.source.Summary ?? "",
-				// Might be HTML, might be plain text. Client should expect '\n' chars.
-				description = e.source.Description,
-				location = e.source.Location
+				description = e.source.Description, // Might be HTML, might be plain text. Client should expect '\n' chars.
+				location = e.source.Location,
 			})
 			.ToArray();
 
@@ -110,7 +111,6 @@ public abstract class Base
 
 	public class DanceEvent
 	{
-		public DateTimeOffset date { get; set; }
 		public DateTimeOffset start { get; set; }
 		public DateTimeOffset end { get; set; }
 		public DateTime startLocal { get; set; }
