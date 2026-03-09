@@ -37,6 +37,7 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 				FromAddress = GetConfigOrThrow("SeriesGmailSender"),
 				FromAddressAppUser = GetConfigOrThrow("SeriesGmailSenderUser"),
 				FromAddressAppPassword = GetConfigOrThrow("SeriesGmailSenderAppPassword"),
+				Build = BuildTime + Configuration["Environment"]
 			};
 
 			(email.Events, _, _) = await GetNextEvents(email.CalendarUrl, [], 1);
@@ -172,5 +173,6 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 		public required string FromAddress;
 		public required string FromAddressAppUser;
 		public required string FromAddressAppPassword;
+		public required string Build;
 	}
 }

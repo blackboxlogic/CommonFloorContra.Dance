@@ -1,12 +1,13 @@
-using System;
-using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using Calendar = Ical.Net.Calendar;
 
 namespace CalendarFunctions;
@@ -19,6 +20,8 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 	internal readonly ILogger Logger = logger;
 	internal readonly IMemoryCache Cache = cache;
 	internal readonly IConfiguration Configuration = configuration;
+	internal static readonly string BuildTime = typeof(Base).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+			?.InformationalVersion?.Split('+').Last() ?? "";
 
 	internal string GetConfigOrThrow(string key)
 	{

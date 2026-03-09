@@ -20,6 +20,7 @@
     }
 }
 
+<!-- build: @Model.Build -->
 <!DOCTYPE html>
 <html>
     <head>
@@ -63,7 +64,7 @@
                 @{var endsSameDay = ev.startLocal.Date == ev.endLocal.Date || (ev.startLocal.Date.AddDays(1) == ev.endLocal.Date && ev.endLocal.Hour < 3);}
                 <div>
                     <span class="label">When:</span>
-                    @* @Raw(FormatDate(ev.startLocal)), *@@FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
+                    @FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
                 </div>
 
                 <div><span class="label">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>

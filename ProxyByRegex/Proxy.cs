@@ -24,10 +24,13 @@ public class Proxy : Base
 	}
 
 	[Function("Hello")]
-	public static IActionResult Hello(
+	public IActionResult Hello(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
 		ILogger log)
 	{
+		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
+		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
+
 		var proxyResponse = new ContentResult
 		{
 			Content = "hi!",
@@ -66,6 +69,8 @@ public class Proxy : Base
 		(var remoteContentString, var headers, var cached) = await Fetch(url, useCache);
 
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
+		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
+		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
 
 		if (isGoogleDoc)
 		{
@@ -99,6 +104,8 @@ public class Proxy : Base
 		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
 		(var nextEvents, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
+		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
+		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
 		var result = JsonSerializer.Serialize(nextEvents);
 
 		var proxyResponse = new ContentResult
