@@ -11,7 +11,7 @@
         return dt.ToString("dddd, MMMM ") + day + $"<sup>{suffix}</sup>";
     }
 
-    // Like "3:20 pm" or "3 pm"
+    // Like "3:20pm" or "3pm"
     string FormatTime(DateTime dt)
     {
         return dt.Minute == 0
@@ -29,41 +29,41 @@
         <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet" />
         <style>
             body { font-family: 'Lora', serif; font-size: 14px; }
-            .email-wrapper { border: 20px solid #00374A; padding: 0px; background-color: #CBF0FF; color: #00374A; }
-            .header { color: #CBF0FF; background-color: #00374A; padding: 16px; }
-            .header a { color: #CBF0FF; }
+            sup { font-size: 0.65em; }
+            .email-wrapper { border: 20px solid @Model.DarkColor; padding: 0px; background-color: @Model.LightColor; color: @Model.DarkColor; }
+            .header { color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px; }
+            .header a { color: @Model.LightColor; white-space: nowrap; }
             .header h1 { font-weight: bold; }
-            .header h1 img { height: 1em; vertical-align: middle; margin-right: 8px; }
-            .divider { background: #00374A; height: 16px; }
-            .event { margin-left: 10px; background-color: #CBF0FF; color: #00374A; padding: 16px; }
-            .event a { color: #00374A; }
+            .header h1 img { height: 1em; vertical-align: middle; margin-right: 8px; background-color: @Model.PopColor; border-radius: 9999px; padding: 4px; }
+            .divider { background: @Model.DarkColor; height: 16px; }
+            .event { margin-left: 10px; background-color: @Model.LightColor; color: @Model.DarkColor; padding: 16px; }
+            .event a { color: @Model.DarkColor;  white-space: nowrap; }
             .event-title { font-weight: bold; }
             .event-description { margin-left: 10px; }
             .label { font-weight: bold; }
-            .footer { color: #CBF0FF; background-color: #00374A; padding: 16px; }
-            .footer a { color: #CBF0FF; }
+            .footer { color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px; }
+            .footer a { color: @Model.LightColor;  white-space: nowrap; }
         </style>
     </head>
     <body>
     <div class="email-wrapper">
         <div class="header">
             <h1><img src="@Model.FaviconUrl">@Model.Subject</h1>
-            Details about us, booking, volunteering, and all future events at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite</a>.
-            <span>Get all <i>our</i> events on <i>your</i> calendar (they'll stay updated <i>by magic</i>):</span>
-            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
-            These are our <b>@DateTime.Now.ToString("MMMM, yyyy") events:</b>
+            Details about us, booking, volunteering, and all future events at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite.Replace("https://","").Replace("http://","")</a>.
+            These are our <b>@DateTime.Now.ToString("MMMM, yyyy")</b> events:
             <br>
         </div>
         @foreach (var ev in Model.Events)
         {
             <div class="divider"/>
             <div class="event">
-                <h2 class="event-title">@Raw(FormatDate(ev.startLocal)) ~ @ev.summary</h2>
+                <h2 class="event-title">@Raw(FormatDate(ev.startLocal))</h2>
+                <h1 class="event-title">@ev.summary</h1>
 
                 @{var endsSameDay = ev.startLocal.Date == ev.endLocal.Date || (ev.startLocal.Date.AddDays(1) == ev.endLocal.Date && ev.endLocal.Hour < 3);}
                 <div>
                     <span class="label">When:</span>
-                    @* @Raw(FormatDate(ev.startLocal)),  *@@FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
+                    @* @Raw(FormatDate(ev.startLocal)), *@@FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
                 </div>
 
                 <div><span class="label">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
@@ -71,7 +71,11 @@
                 <div class="event-description">@Raw(ev.description?.Replace("\n", "<br>"))</div>
             </div>
         }
-        <div class="footer">This email was composed by an experimental computer program which isn't self aware and lacks reasoning skill. Problem? Suggestion? Reply and the human author will see it.</div>
+        <div class="footer">
+            This email was sent by a <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance">robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
+            <br><span>Get all <i>our events</i> on <i>your calendar</i> (they'll stay updated <i>by magic</i>):</span>
+            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
+        </div>
     </div>
     </body>
 </html>

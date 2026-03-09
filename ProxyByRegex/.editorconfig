@@ -1,0 +1,4 @@
+root = true
+
+[*.{cs,cshtml}]
+indent_style = tab

@@ -25,6 +25,11 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 		return Configuration[key] ?? throw new Exception("Missing config: " + key);
 	}
 
+	internal string? GetConfigOrNull(string key)
+	{
+		return Configuration[key];
+	}
+
 	internal async Task<(DanceEvent[] nextEvents, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
 	{
 		(var remoteContentString, var headers, var cached) = await Fetch(urlString);

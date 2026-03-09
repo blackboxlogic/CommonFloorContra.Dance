@@ -1,47 +1,56 @@
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using RazorLight;
 using System;
 using System.Net;
 using System.Net.Mail;
 using System.Reflection;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using RazorLight;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 
 namespace CalendarFunctions;
 
 // TODO
-// Format the email
-// Test timezone issues
-// Set for multiple dance series
+// Set for multiple dance series (put config in json list, include email template maybe as a link hosted on their site)
 
 // Schedule a preview event email sent to me with a link to send the email to all mailchimp subscribers.
 // https://mailchimp.com/help/use-email-beamer-to-create-a-campaign/
 public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, IMemoryCache cache, IConfiguration configuration)
 	: Base(httpClientFactory, logger, cache, configuration)
 {
-	[Function("SendSampleEmailAPI")]
-	public async Task SendSampleEmailApi([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
-		Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
-	{
-		await SendSampleEmailTimer(new());
-	}
 
-	[Function("SendSampleEmailTimer")] // At Noon-oh-five every 1th day of the month
-	public async Task SendSampleEmailTimer([TimerTrigger("0 05 17 1 * *", RunOnStartup = true)] TimerInfo myTimer)
+	[Function("SendSampleEmailTimer")] // At Noon-oh-five every 1st day of the month
+	public async Task SendSampleEmailTimer([TimerTrigger("0 05 17 1 * *")] TimerInfo myTimer)
 	{
 		try
 		{
-			var seriesName = GetConfigOrThrow("SeriesName");
-			var seriesWebsite = GetConfigOrThrow("SeriesWebsite");
-			var calendarUrl = GetConfigOrThrow("SeriesCalendarUrl");
-			(var nextEvents, var headers, var cached) = await GetNextEvents(calendarUrl, [], 1);
-			var toAddress = new MailAddress(GetConfigOrThrow("SeriesEmailDestination"));
-			var fromAddress = new MailAddress(GetConfigOrThrow("SeriesGmailSender"), seriesName);
-			var fromAddressAppPassword = GetConfigOrThrow("SeriesGmailSenderAppPassword");
-			var emailSubject = $"{seriesName} ~ {DateTime.Now:MMMM} Events";
-			await SendEmailFromGmail(calendarUrl, nextEvents, toAddress, fromAddress, fromAddressAppPassword, emailSubject, seriesName, seriesWebsite);
+			var email = new EmailModel
+			{
+				SeriesName = GetConfigOrThrow("SeriesName"),
+				SeriesWebsite = GetConfigOrThrow("SeriesWebsite"),
+				CalendarUrl = GetConfigOrThrow("SeriesCalendarUrl"),
+				LightColor = GetConfigOrNull("LightColor") ?? "#FFFFFF",
+				DarkColor = GetConfigOrNull("DarkColor") ?? "#000000",
+				PopColor = GetConfigOrNull("PopColor") ?? "#333333",
+				ToAddress = GetConfigOrThrow("SeriesEmailDestination"),
+				FromAddress = GetConfigOrThrow("SeriesGmailSender"),
+				FromAddressAppUser = GetConfigOrThrow("SeriesGmailSenderUser"),
+				FromAddressAppPassword = GetConfigOrThrow("SeriesGmailSenderAppPassword"),
+			};
+
+			(email.Events, _, _) = await GetNextEvents(email.CalendarUrl, [], 1);
+			email.FaviconUrl = await GetFaviconUrlFromWebsite(email.SeriesWebsite);
+			email.Subject = $"{email.SeriesName} ~ {DateTime.Now:MMMM} Events";
+
+			if (email.Events.Length > 0)
+			{
+				await SendEmailFromGmail(email);
+			}
+			else
+			{
+				Logger.LogInformation($"No events to email in {DateTime.Now:MMMM}.");
+			}
 		}
 		catch (Exception ex)
 		{
@@ -49,22 +58,26 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 		}
 	}
 
-	private static async Task SendEmailFromGmail(string calendarUrl, IEnumerable<DanceEvent> nextEvents,
-		MailAddress toAddress, MailAddress fromAddress, string fromAddressAppPassword, string emailSubject,
-		string seriesName, string seriesWebsite)
+	private async Task SendEmailFromGmail(EmailModel email)
 	{
-		if(!nextEvents.Any())
-		{
-			return;
-		}
-
-		var textBody = GenerateTextBody(calendarUrl, nextEvents, seriesName, seriesWebsite, emailSubject);
+		var textBody = GenerateTextBody(email);
 		var textView = AlternateView.CreateAlternateViewFromString(textBody, Encoding.UTF8, "text/plain");
 		textView.TransferEncoding = System.Net.Mime.TransferEncoding.QuotedPrintable;
 
-		var htmlBody = await GenerateHtmlBody(calendarUrl, nextEvents, seriesName, seriesWebsite, emailSubject);
+		var htmlBody = await GenerateHtmlBody(email);
 		var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, Encoding.UTF8, "text/html");
 		htmlView.TransferEncoding = System.Net.Mime.TransferEncoding.QuotedPrintable;
+
+		using var message = new MailMessage
+		{
+			From = new MailAddress(email.FromAddress, email.SeriesName),
+			Subject = "[PREVIEW] " + email.Subject
+		};
+		message.AlternateViews.Add(textView);
+		message.AlternateViews.Add(htmlView); // Email clients show the last view first, put htmlView second.
+
+		// Send a preview
+		message.To.Add(email.FromAddress);
 
 		using var smtp = new SmtpClient
 		{
@@ -73,30 +86,28 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 			EnableSsl = true,
 			DeliveryMethod = SmtpDeliveryMethod.Network,
 			UseDefaultCredentials = false,
-			Credentials = new NetworkCredential("admin@commonfloorcontra.dance", fromAddressAppPassword)
+			Credentials = new NetworkCredential(email.FromAddressAppUser, email.FromAddressAppPassword)
 		};
-		using var message = new MailMessage
-		{
-			From = fromAddress,
-			Subject = emailSubject
-		};
-		message.AlternateViews.Add(textView);
-		message.AlternateViews.Add(htmlView); // last one is the preferred view
-												//message.ReplyToList.Add(toAddress)
-												//message.To.Add(toAddress);
-												//message.To.Add(fromAddress); // So sender can preview the email body.
-		message.To.Add(new MailAddress("blackboxlogic@gmail.com")); // For testing purposes only.
 		await smtp.SendMailAsync(message);
+
+		// Send the live one
+		if (Configuration["Environment"] == "PROD")
+		{
+			message.Subject = email.Subject;
+			message.To.Clear();
+			message.To.Add(new MailAddress(email.ToAddress));
+			await smtp.SendMailAsync(message);
+		}
 	}
 
-	private static string GenerateTextBody(string calendarUrl, IEnumerable<DanceEvent> nextEvents, string seriesName, string seriesWebsite, string subject)
+	private static string GenerateTextBody(EmailModel email)
 	{
 		var plainTextBody = new StringBuilder();
-		plainTextBody.AppendLine($"{nextEvents.Count()} Upcoming {seriesName} Events:");
+		plainTextBody.AppendLine($"{email.Events.Length} Upcoming {email.SeriesName} Events:");
 		plainTextBody.AppendLine();
 
 		int i = 1;
-		foreach (var ev in nextEvents)
+		foreach (var ev in email.Events)
 		{
 			plainTextBody.AppendLine($"Event {i++}: {ev.summary}");
 			if(ev.startLocal.Date == ev.endLocal.Date)
@@ -113,39 +124,21 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 			plainTextBody.AppendLine();
 		}
 
-		plainTextBody.AppendLine($"Get more info about {seriesName} at {seriesWebsite}.");
+		plainTextBody.AppendLine($"Get more info about {email.SeriesName} at {email.SeriesWebsite}.");
 		return plainTextBody.ToString();
 	}
 
-	private static async Task<string> GenerateHtmlBody(string calendarUrl, IEnumerable<DanceEvent> nextEvents, string seriesName, string seriesWebsite, string emailSubject)
+	private static async Task<string> GenerateHtmlBody(EmailModel model)
 	{
 		var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
 		var engine = new RazorLightEngineBuilder()
 			.UseFileSystemProject(assemblyPath) // root of where to find templates
 			.UseMemoryCachingProvider()
 			.Build();
-
-		var model = new EmailModel
-		{
-			Events = nextEvents,
-			SeriesName = seriesName,
-			SeriesWebsite = seriesWebsite,
-			CalendarUrl = calendarUrl,
-			FaviconUrl = await GetFaviconUrl(seriesWebsite),
-			Subject = emailSubject
-		};
-
-		//try
-		//{
-			return await engine.CompileRenderAsync("EmailTemplate.cshtml", model);
-		//}
-		//catch (Exception e)
-		//{
-		//	return "";
-		//}
+		return await engine.CompileRenderAsync("EmailTemplate.cshtml", model);
 	}
 
-	private static async Task<string> GetFaviconUrl(string siteUrl)
+	private static async Task<string> GetFaviconUrlFromWebsite(string siteUrl)
 	{
 		try
 		{
@@ -164,14 +157,20 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 		return new Uri(new Uri(siteUrl), "/favicon.ico").ToString();
 	}
 
-
 	public class EmailModel
 	{
-		public required IEnumerable<DanceEvent> Events;
+		public DanceEvent[] Events = [];
 		public required string SeriesName;
 		public required string SeriesWebsite;
 		public required string CalendarUrl;
-		public required string FaviconUrl;
-		public required string Subject;
+		public string FaviconUrl = "";
+		public string Subject = "";
+		public required string LightColor;
+		public required string DarkColor;
+		public required string PopColor;
+		public required string ToAddress;
+		public required string FromAddress;
+		public required string FromAddressAppUser;
+		public required string FromAddressAppPassword;
 	}
 }
