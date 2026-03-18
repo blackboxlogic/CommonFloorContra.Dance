@@ -13,6 +13,7 @@ namespace CalendarFunctions;
 
 // TODO
 // Set for multiple dance series (put config in json list, include email template maybe as a link hosted on their site)
+// Filter: CANCELLED for example
 
 // Schedule a preview event email sent to me with a link to send the email to all mailchimp subscribers.
 // https://mailchimp.com/help/use-email-beamer-to-create-a-campaign/
