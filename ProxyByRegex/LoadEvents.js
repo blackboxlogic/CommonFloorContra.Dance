@@ -9,10 +9,11 @@
   data-time-id="next-dance-time"
   data-summary-id="next-dance-title"
   data-description-id="next-dance-description"
-  data-location-id="next-dance-location"
+  data-location-id="next-dance-location" // Should be a <a href> tag, will get a google maps link and text.
   data-months-ahead="13" // How far ahead in time to look (Default is 12)
   data-filter="contra" // Only returns events with this phrase in the summary or description
   data-force-description-styles="true"> // Inlines bulleted-list and bold styles (in case your site's css suppresses <ul> and <b>).
+  data-list-tbd-id="list01"> // Should be a <div> with a single <ul> or <ol> in it, will get filled with <li> for each "TBD" event (has "tbd" in the description, looking to hire caller/band).
 </script>
 <div>
   <h2 id="next-dance-title">Loading title…</h2>
@@ -33,6 +34,7 @@
     const filter = currentScript.dataset.filter;
     const locationID = currentScript.dataset.locationId;
     const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
+    const listTbdID = currentScript.dataset.listTbdId;
 
     const containsParam = filter ? "&contains=" + filter : "";
     const monthsParam = months ? "&months=" + months : "";
@@ -53,7 +55,7 @@
     });
 
     const timeFormatter = new Intl.DateTimeFormat("en-US", {
-        hour: "2-digit",
+        hour: "1-digit",
         minute: "2-digit",
         hour12: true
     });
@@ -73,6 +75,20 @@
     if (locationID) {
         document.getElementById(locationID).innerHTML = nextDance.location;
         document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
+    }
+
+    if (listTbdID) {
+        dances = dances.filter(dance => dance.summary.toLowerCase().includes("tbd")); //.sort((a, b) => new Date(a.start) - new Date(b.start))
+        const list = document.getElementById("list01").children[0];
+        list.innerHTML = "";
+        dances.forEach(dance => {
+            const paragraph = document.createElement("p");
+            const listItem = document.createElement("li");
+            const summary = document.createTextNode(dateFormatter.format(Date.parse(dance.start)) + " ~ " + dance.summary);
+            listItem.appendChild(paragraph);
+            paragraph.appendChild(summary);
+            list.appendChild(listItem);
+        });
     }
 })();
 
