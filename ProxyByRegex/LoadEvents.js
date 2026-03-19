@@ -1,27 +1,48 @@
-// Loads the next upcoming event from a Google Calendar and populates elements on the page.
-//
-// Example usage:
-// <script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadEventsScript"
-//   data-date-id="text18"
-//   data-summary-id="text19"
-//   data-description-id="text20"
-//   data-calendar-id="0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4@group.calendar.google.com">
-//   data-months-ahead="13">
-// </script>
+// Loads the next event from a iCal calendar and populates details into elements on your page.
+
+/* Example usage:
+<script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadEventsScript"
+  data-ical-link="https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4@group.calendar.google.com/public/basic.ics"
+  // All following parameters are optional:
+  // The IDs of elements to receive event details:
+  data-date-id="next-dance-date"
+  data-time-id="next-dance-time"
+  data-summary-id="next-dance-title"
+  data-description-id="next-dance-description"
+  data-location-id="next-dance-location"
+  data-months-ahead="13" // How far ahead in time to look (Default is 12)
+  data-filter="contra" // Only returns events with this phrase in the summary or description
+  data-force-description-styles="true"> // Inlines bulleted-list and bold styles (in case your site's css suppresses <ul> and <b>).
+</script>
+<div>
+  <h2 id="next-dance-title">Loading title…</h2>
+  <h2 id="next-dance-date" style="display: inline">Loading date…</h2><h2 id="next-dance-time" style="display: inline">Loading time…</h2>
+  <h3> Venue: <a href="" id="next-dance-location">Loading venue…</a></h3>
+  <h3 id="next-dance-description">Loading description…</h3>
+</div>
+*/
 
 (async function () {
     const currentScript = document.currentScript;
     const dateID = currentScript.dataset.dateId;
+    const timeID = currentScript.dataset.timeId;
     const summaryID = currentScript.dataset.summaryId;
     const descriptionID = currentScript.dataset.descriptionId;
-    const calendarID = currentScript.dataset.calendarId;
+    const icalLink = currentScript.dataset.icalLink;
     const months = currentScript.dataset.monthsAhead;
+    const filter = currentScript.dataset.filter;
+    const locationID = currentScript.dataset.locationId;
+    const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
 
-    const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?contains=contra&months=" + months + "&url=https://calendar.google.com/calendar/ical/" + calendarID + "/public/basic.ics";
+    const containsParam = filter ? "&contains=" + filter : "";
+    const monthsParam = months ? "&months=" + months : "";
+    const icalLinkParam = "url=" + icalLink
+    const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?url=" + icalLinkParam + monthsParam + containsParam;
 
     const response = await fetch(url);
     var dances = JSON.parse(await response.text());
 
+    if (dances.length == 0) return;
     var nextDance = dances[0];
 
     const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -31,7 +52,28 @@
         day: "numeric"
     });
 
-    document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
-    document.getElementById(summaryID).innerHTML = nextDance.summary;
-    document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
+    const timeFormatter = new Intl.DateTimeFormat("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+    });
+
+    if (dateID) document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
+    if (timeID) document.getElementById(timeID).innerHTML = timeFormatter.format(Date.parse(nextDance.start));
+    if (summaryID) document.getElementById(summaryID).innerHTML = nextDance.summary;
+    if (descriptionID) {
+        if (forceDescriptionStyles) {
+            document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>")
+                ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
+                ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
+        } else {
+            document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
+        }
+    }
+    if (locationID) {
+        document.getElementById(locationID).innerHTML = nextDance.location;
+        document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
+    }
 })();
+
+//# sourceURL=LoadEvents.js

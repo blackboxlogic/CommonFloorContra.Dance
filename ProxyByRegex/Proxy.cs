@@ -109,21 +109,6 @@ public class Proxy : Base
 		};
 	}
 
-	[Function("LoadEventsScriptCarrd")]
-	public IActionResult LoadEventsScriptCarrd(
-		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-	{
-		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadEvents.Carrd.js");
-		var content = System.IO.File.ReadAllText(scriptPath);
-
-		return new ContentResult
-		{
-			Content = content,
-			ContentType = "application/javascript; charset=utf-8",
-			StatusCode = (int)HttpStatusCode.OK
-		};
-	}
-
 	// takes 'url', 'months' and 'contains' query parameters
 	[Function("GetNextEventsJSON")]
 	public async Task<IActionResult> GetNextEventsJSON(
