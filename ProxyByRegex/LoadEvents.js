@@ -55,7 +55,7 @@
     });
 
     const timeFormatter = new Intl.DateTimeFormat("en-US", {
-        hour: "1-digit",
+        hour: "numeric",
         minute: "2-digit",
         hour12: true
     });
