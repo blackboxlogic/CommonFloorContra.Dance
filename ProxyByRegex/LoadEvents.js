@@ -33,7 +33,5 @@
 
     document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
     document.getElementById(summaryID).innerHTML = nextDance.summary;
-    document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>")
-        ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
-        ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
+    document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
 })();

@@ -98,6 +98,21 @@ public class Proxy : Base
 	public IActionResult LoadEventsScript(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
+		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadEvents.js");
+		var content = System.IO.File.ReadAllText(scriptPath);
+
+		return new ContentResult
+		{
+			Content = content,
+			ContentType = "application/javascript; charset=utf-8",
+			StatusCode = (int)HttpStatusCode.OK
+		};
+	}
+
+	[Function("LoadEventsScriptCarrd")]
+	public IActionResult LoadEventsScriptCarrd(
+		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+	{
 		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadEvents.Carrd.js");
 		var content = System.IO.File.ReadAllText(scriptPath);
 
