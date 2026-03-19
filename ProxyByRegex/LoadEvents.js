@@ -37,7 +37,7 @@
     const containsParam = filter ? "&contains=" + filter : "";
     const monthsParam = months ? "&months=" + months : "";
     const icalLinkParam = "url=" + icalLink
-    const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?url=" + icalLinkParam + monthsParam + containsParam;
+    const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?" + icalLinkParam + monthsParam + containsParam;
 
     const response = await fetch(url);
     var dances = JSON.parse(await response.text());
