@@ -25,10 +25,10 @@
     <None Update="EmailTemplate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="LoadEvents.js">
+    <None Update="LoadOtherSeries.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="LoadEvents.Carrd.js">
+    <None Update="LoadEvents.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

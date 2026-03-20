@@ -99,7 +99,22 @@ public class Proxy : Base
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
 		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadEvents.js");
-		var content = System.IO.File.ReadAllText(scriptPath);
+		var content = File.ReadAllText(scriptPath);
+
+		return new ContentResult
+		{
+			Content = content,
+			ContentType = "application/javascript; charset=utf-8",
+			StatusCode = (int)HttpStatusCode.OK
+		};
+	}
+
+	[Function("LoadOtherSeriesScript")]
+	public IActionResult LoadOtherSeriesScript(
+	[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+	{
+		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadOtherSeries.js");
+		var content = File.ReadAllText(scriptPath);
 
 		return new ContentResult
 		{

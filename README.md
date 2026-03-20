@@ -1,35 +1,30 @@
-# But With Calendars
-A proposal for low-effort/low-cost/high-return tech for event publicity. You maintain your own public calendar (ical or google) and it integrates with other technologies: websites, automated email, dancers’ calendars, booking, and other tools, etc.
+# ... With Calendars
+A proposal for low-effort event publicity. You maintain your own public calendar (ical or google) and it integrates with other technologies: website, email, dancers’ calendars, booking, and other tools, etc.
 ## Public Calendar Specification ([example](https://calendar.google.com/calendar/embed?src=0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com&ctz=America%2FNew_York))
 * Title or description **Should** include **keywords** for event type: (“contra” if it’s a contra dance)
-* Events **Must** has a start/end **time**
-* Events **Must** have a **location** (what about online events?)
-* Description **Should** include dance **details** (like a flyer): location, cost, schedule, parking, policies, contact info, or at least a link to your dance series’s primary website
-* Title of events that are tentative **should** contain **“TENTATIVE“**
-* Title of events that are cancelled **should** contain **“CANCELLED”** (or delete the event)
+* Events **Must** have a **start/end time** and **location**
+* Description **Should** include dance **details like a flyer**: venue, cost, schedule, parking, policies, contact info, website. Use basic html formatting: lists, bold, font size.
 ## Automated Website ([example](www.commonfloorcontra.dance))
-* Auto-updating “Next Event” section
+* Automatic [Next Event](https://github.com/blackboxlogic/CommonFloorContra.Dance/blob/main/ProxyByRegex/LoadEvents.js) section
 * Calendar of all future events
 * Links to add this dance calendar into dancer’s personal calendar
 * Email subscribe form
-* Performer Booking Info page
-* [Analytics](cfcd.goatcounter.com): can help predict event attendance
-* Links to other local dance series
-* You’ll need to choose/purchase a domain, configure the DNS, build and host a website
-* SHould it pull from API or parse ical?
+* Performer Booking page (automatic list of events still seeking performers)
+* [Analytics](https://cfcd.goatcounter.com) (help predict event attendance)
+* Link [Other Dance Series]((https://github.com/blackboxlogic/CommonFloorContra.Dance/blob/main/ProxyByRegex/LoadOtherSeries.js))
 ## Automated Email
 * Setup an email subscription service (like mailchimp) with an email beamer feature (an email received is sent to all subscribers).
 * Create an app password for an account to send the email
 * Create a json file like
 ```
 {
-  "SeriesName": "Common Floor Contra Dance",
-  "SeriesWebsite": "https://commonfloorcontra.dance",
-  “SeriesCalendarUrl": "https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics",
-  "SeriesEmailDestination": "[redacted]@inbound.mailchimp.com",
-  "SeriesGmailSender": "info@commonfloorcontra.dance",
-  "SeriesGmailSenderUser": "admin@commonfloorcontra.dance",
-  "SeriesGmailSenderAppPassword": "[redacted]",
+  "Name": "Common Floor Contra Dance",
+  "Website": "https://commonfloorcontra.dance",
+  “CalendarUrl": "https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics",
+  "EmailDestination": "[redacted]@inbound.mailchimp.com",
+  "GmailSender": "info@commonfloorcontra.dance",
+  "GmailSenderUser": "admin@commonfloorcontra.dance",
+  "GmailSenderAppPassword": "[redacted]",
   "LightColor": "#CBF0FF",
   "DarkColor": "#00374A",
   "PopColor": "#FFC704"
@@ -46,7 +41,6 @@ A proposal for low-effort/low-cost/high-return tech for event publicity. You mai
   * Keywords can be any variation of capitalization, spacing or punctuation (for example “band tbd” and “Band:TBD” are equivalent)
 * **Performers**, to find events:
   * Add filter [contains/doesn’t contain] [key], hide it, flag it
-  * Hide contains “*cancelled*”
   * Hide not contains “*contra*”
   * Hide not contains “*maine*”
   * Flag Red contains “*band tbd*”

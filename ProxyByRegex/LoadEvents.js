@@ -1,25 +1,28 @@
 // Loads the next event from a iCal calendar and populates details into elements on your page.
+// TODO: emit <script type="application/ld+json">
 
 /* Example usage:
 <script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadEventsScript"
   data-ical-link="https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4@group.calendar.google.com/public/basic.ics"
-  // All following parameters are optional:
+  // All following parameters are optional, if left off then that section won't be populated:
   // The IDs of elements to receive event details:
   data-date-id="next-dance-date"
   data-time-id="next-dance-time"
   data-summary-id="next-dance-title"
   data-description-id="next-dance-description"
   data-location-id="next-dance-location" // Should be a <a href> tag, will get a google maps link and text.
+  data-list-tbd-id="tbd-list"> // Should be a <div> with a single <ul> or <ol> in it, will get filled with <li> for each "TBD" event (has "tbd" in the description, looking to hire caller/band).
+  // Configuration
   data-months-ahead="13" // How far ahead in time to look (Default is 12)
   data-filter="contra" // Only returns events with this phrase in the summary or description
   data-force-description-styles="true"> // Inlines bulleted-list and bold styles (in case your site's css suppresses <ul> and <b>).
-  data-list-tbd-id="list01"> // Should be a <div> with a single <ul> or <ol> in it, will get filled with <li> for each "TBD" event (has "tbd" in the description, looking to hire caller/band).
 </script>
 <div>
   <h2 id="next-dance-title">Loading title…</h2>
-  <h2 id="next-dance-date" style="display: inline">Loading date…</h2><h2 id="next-dance-time" style="display: inline">Loading time…</h2>
+  <h2 id="next-dance-date" style="display: inline">Loading date…</h2> at <h2 id="next-dance-time" style="display: inline">Loading time…</h2>
   <h3> Venue: <a href="" id="next-dance-location">Loading venue…</a></h3>
   <h3 id="next-dance-description">Loading description…</h3>
+  <div id="tbd-list">We're booking performers for these dances:<ul></ul></div>
 </div>
 */
 
