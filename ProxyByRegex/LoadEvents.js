@@ -15,7 +15,8 @@
   // Configuration
   data-months-ahead="13" // How far ahead in time to look (Default is 12)
   data-filter="contra" // Only returns events with this phrase in the summary or description
-  data-force-description-styles="true"> // Inlines bulleted-list and bold styles (in case your site's css suppresses <ul> and <b>).
+  data-force-description-styles="true" // Inlines bulleted-list and bold styles (in case your site's css suppresses <ul> and <b>).
+  data-emit-schema="true"> // Emits a <script type="application/ld+json"> with schema.org DanceEvent data for the next event, improses SEO.
 </script>
 <div>
   <h2 id="next-dance-title">Loading title…</h2>
@@ -38,6 +39,7 @@
     const locationID = currentScript.dataset.locationId;
     const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
     const listTbdID = currentScript.dataset.listTbdId;
+    const emitSchema = currentScript.dataset.emitSchema;
 
     const containsParam = filter ? "&contains=" + filter : "";
     const monthsParam = months ? "&months=" + months : "";
@@ -78,6 +80,25 @@
     if (locationID) {
         document.getElementById(locationID).innerHTML = nextDance.location;
         document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
+    }
+
+    if (emitSchema) {
+        const schemaScript = document.createElement("script");
+        schemaScript.type = "application/ld+json";
+        schemaScript.textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "DanceEvent",
+            "name": nextDance.summary,
+            "startDate": nextDance.start,
+            "endDate": nextDance.end,
+            "location": {
+                "@type": "Place",
+                "name": nextDance.location,
+                "address": nextDance.location
+            },
+            "description": nextDance.description?.replace(/<[^>]*>/g, '')
+        });
+        document.head.appendChild(schemaScript);
     }
 
     if (listTbdID) {
