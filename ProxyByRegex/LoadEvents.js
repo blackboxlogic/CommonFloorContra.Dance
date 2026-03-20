@@ -27,94 +27,96 @@
 </div>
 */
 
-const currentScript = document.currentScript;
-const dateID = currentScript.dataset.dateId;
-const timeID = currentScript.dataset.timeId;
-const summaryID = currentScript.dataset.summaryId;
-const descriptionID = currentScript.dataset.descriptionId;
-const icalLink = currentScript.dataset.icalLink;
-const months = currentScript.dataset.monthsAhead;
-const filter = currentScript.dataset.filter;
-const locationID = currentScript.dataset.locationId;
-const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
-const listTbdID = currentScript.dataset.listTbdId;
-const emitSchema = currentScript.dataset.emitSchema;
+{
+    const currentScript = document.currentScript;
+    const dateID = currentScript.dataset.dateId;
+    const timeID = currentScript.dataset.timeId;
+    const summaryID = currentScript.dataset.summaryId;
+    const descriptionID = currentScript.dataset.descriptionId;
+    const icalLink = currentScript.dataset.icalLink;
+    const months = currentScript.dataset.monthsAhead;
+    const filter = currentScript.dataset.filter;
+    const locationID = currentScript.dataset.locationId;
+    const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
+    const listTbdID = currentScript.dataset.listTbdId;
+    const emitSchema = currentScript.dataset.emitSchema;
 
-(async function () {
+    (async function () {
 
-    const containsParam = filter ? "&contains=" + filter : "";
-    const monthsParam = months ? "&months=" + months : "";
-    const icalLinkParam = "url=" + icalLink
-    const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?" + icalLinkParam + monthsParam + containsParam;
+        const containsParam = filter ? "&contains=" + filter : "";
+        const monthsParam = months ? "&months=" + months : "";
+        const icalLinkParam = "url=" + icalLink
+        const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?" + icalLinkParam + monthsParam + containsParam;
 
-    const response = await fetch(url);
-    var dances = JSON.parse(await response.text());
+        const response = await fetch(url);
+        var dances = JSON.parse(await response.text());
 
-    if (dances.length == 0) return;
-    var nextDance = dances[0];
+        if (dances.length == 0) return;
+        var nextDance = dances[0];
 
-    const dateFormatter = new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
+        const dateFormatter = new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        });
 
-    const timeFormatter = new Intl.DateTimeFormat("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true
-    });
+        const timeFormatter = new Intl.DateTimeFormat("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+        });
 
-    if (dateID) document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
-    if (timeID) document.getElementById(timeID).innerHTML = timeFormatter.format(Date.parse(nextDance.start));
-    if (summaryID) document.getElementById(summaryID).innerHTML = nextDance.summary;
-    if (descriptionID) {
-        if (forceDescriptionStyles) {
-            document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>")
-                ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
-                ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
-        } else {
-            document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
+        if (dateID) document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
+        if (timeID) document.getElementById(timeID).innerHTML = timeFormatter.format(Date.parse(nextDance.start));
+        if (summaryID) document.getElementById(summaryID).innerHTML = nextDance.summary;
+        if (descriptionID) {
+            if (forceDescriptionStyles) {
+                document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>")
+                    ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
+                    ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
+            } else {
+                document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
+            }
         }
-    }
-    if (locationID) {
-        document.getElementById(locationID).innerHTML = nextDance.location;
-        document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
-    }
+        if (locationID) {
+            document.getElementById(locationID).innerHTML = nextDance.location;
+            document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
+        }
 
-    if (emitSchema) {
-        const schemaScript = document.createElement("script");
-        schemaScript.type = "application/ld+json";
-        schemaScript.textContent = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "DanceEvent",
-            "name": nextDance.summary,
-            "startDate": nextDance.start,
-            "endDate": nextDance.end,
-            "location": {
-                "@type": "Place",
-                "name": nextDance.location,
-                "address": nextDance.location
-            },
-            "description": nextDance.description?.replace(/<[^>]*>/g, '')
-        });
-        document.head.appendChild(schemaScript);
-    }
+        if (emitSchema) {
+            const schemaScript = document.createElement("script");
+            schemaScript.type = "application/ld+json";
+            schemaScript.textContent = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "DanceEvent",
+                "name": nextDance.summary,
+                "startDate": nextDance.start,
+                "endDate": nextDance.end,
+                "location": {
+                    "@type": "Place",
+                    "name": nextDance.location,
+                    "address": nextDance.location
+                },
+                "description": nextDance.description?.replace(/<[^>]*>/g, '')
+            });
+            document.head.appendChild(schemaScript);
+        }
 
-    if (listTbdID) {
-        dances = dances.filter(dance => dance.summary.toLowerCase().includes("tbd")); //.sort((a, b) => new Date(a.start) - new Date(b.start))
-        const list = document.getElementById("list01").children[0];
-        list.innerHTML = "";
-        dances.forEach(dance => {
-            const paragraph = document.createElement("p");
-            const listItem = document.createElement("li");
-            const summary = document.createTextNode(dateFormatter.format(Date.parse(dance.start)) + " ~ " + dance.summary);
-            listItem.appendChild(paragraph);
-            paragraph.appendChild(summary);
-            list.appendChild(listItem);
-        });
-    }
-})();
+        if (listTbdID) {
+            dances = dances.filter(dance => dance.summary.toLowerCase().includes("tbd")); //.sort((a, b) => new Date(a.start) - new Date(b.start))
+            const list = document.getElementById("list01").children[0];
+            list.innerHTML = "";
+            dances.forEach(dance => {
+                const paragraph = document.createElement("p");
+                const listItem = document.createElement("li");
+                const summary = document.createTextNode(dateFormatter.format(Date.parse(dance.start)) + " ~ " + dance.summary);
+                listItem.appendChild(paragraph);
+                paragraph.appendChild(summary);
+                list.appendChild(listItem);
+            });
+        }
+    })();
+}
 
 //# sourceURL=LoadEvents.js
