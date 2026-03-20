@@ -27,19 +27,20 @@
 </div>
 */
 
+const currentScript = document.currentScript;
+const dateID = currentScript.dataset.dateId;
+const timeID = currentScript.dataset.timeId;
+const summaryID = currentScript.dataset.summaryId;
+const descriptionID = currentScript.dataset.descriptionId;
+const icalLink = currentScript.dataset.icalLink;
+const months = currentScript.dataset.monthsAhead;
+const filter = currentScript.dataset.filter;
+const locationID = currentScript.dataset.locationId;
+const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
+const listTbdID = currentScript.dataset.listTbdId;
+const emitSchema = currentScript.dataset.emitSchema;
+
 (async function () {
-    const currentScript = document.currentScript;
-    const dateID = currentScript.dataset.dateId;
-    const timeID = currentScript.dataset.timeId;
-    const summaryID = currentScript.dataset.summaryId;
-    const descriptionID = currentScript.dataset.descriptionId;
-    const icalLink = currentScript.dataset.icalLink;
-    const months = currentScript.dataset.monthsAhead;
-    const filter = currentScript.dataset.filter;
-    const locationID = currentScript.dataset.locationId;
-    const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
-    const listTbdID = currentScript.dataset.listTbdId;
-    const emitSchema = currentScript.dataset.emitSchema;
 
     const containsParam = filter ? "&contains=" + filter : "";
     const monthsParam = months ? "&months=" + months : "";

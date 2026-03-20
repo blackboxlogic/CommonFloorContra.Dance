@@ -3,15 +3,16 @@
 /* Example usage:
 <script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadOtherSeriesScript"
   data-state="ME"
-  data-list-id="seriesList"
+  data-list-id="seriesList">
 </script>
 <p id="seriesList">Loading other local dance series…</p>
 */
 
+const currentScript = document.currentScript;
+const state = currentScript.dataset.state;
+const listId = currentScript.dataset.listId;
+
 (async function () {
-    const currentScript = document.currentScript;
-    const state = currentScript.dataset.state;
-    const listId = currentScript.dataset.listId;
 
     const response = await fetch("https://www.trycontra.com/dances_locs.json");
     var json = await response.text();
