@@ -124,19 +124,45 @@ public class Proxy : Base
 		};
 	}
 
+	// Returns calendar metadata (name, description, timezone) + events
+	// takes 'url', 'months' and 'contains' query parameters
+	[Function("GetCalendarJSON")]
+	public async Task<IActionResult> GetCalendarJSON(
+		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+	{
+		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
+		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("months"));
+		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
+		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
+		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
+		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
+		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
+		var result = JsonSerializer.Serialize(calender);
+
+		var proxyResponse = new ContentResult
+		{
+			Content = result,
+			ContentType = "application/json; charset=utf-8",
+			StatusCode = (int)HttpStatusCode.OK
+		};
+
+		return proxyResponse;
+	}
+
 	// takes 'url', 'months' and 'contains' query parameters
 	[Function("GetNextEventsJSON")]
+	[Obsolete("Use GetCalendarDetail() instead")]
 	public async Task<IActionResult> GetNextEventsJSON(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
 		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("url"));
 		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
-		(var nextEvents, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
+		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
 		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
 		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
-		var result = JsonSerializer.Serialize(nextEvents);
+		var result = JsonSerializer.Serialize(calender.events);
 
 		var proxyResponse = new ContentResult
 		{

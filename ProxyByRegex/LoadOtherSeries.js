@@ -1,4 +1,5 @@
 // Loads and links other local dance series into elements on your page (from trycontra.com)
+// In carrd, script element stripped `data-` attributes. Use `style=hidden` on carrd embed element.
 
 /* Example usage:
 <script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadOtherSeriesScript"

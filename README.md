@@ -15,20 +15,18 @@ A proposal for low-effort event publicity. You maintain your own public calendar
 * LD+json for SEO
 ## Automated Email
 * Setup an email subscription service (like mailchimp) with an email beamer feature (an email received is sent to all subscribers).
-* Create an app password for an account to send the email
 * Create a json file like
 ```
 {
-  "Name": "Common Floor Contra Dance",
-  "Website": "https://commonfloorcontra.dance",
+  "OrgName": "Common Floor Contra Dance",
+  "OrgWebsite": "https://commonfloorcontra.dance",
   “CalendarUrl": "https://calendar.google.com/calendar/ical/0d91bca8eebb5bf2b86e7ea2ef26a3f6f1729ee3c73b87985a0407204e00dbc4%40group.calendar.google.com/public/basic.ics",
   "EmailDestination": "[redacted]@inbound.mailchimp.com",
-  "GmailSender": "info@commonfloorcontra.dance",
-  "GmailSenderUser": "admin@commonfloorcontra.dance",
-  "GmailSenderAppPassword": "[redacted]",
+  "Filter": "contra",
   "LightColor": "#CBF0FF",
   "DarkColor": "#00374A",
-  "PopColor": "#FFC704"
+  "PopColor": "#FFC704",
+  "DayOfMonth": "1", // OR "DaysBeforeEachEvent": "7",
 }
 ```
 ## Personal Calendar Integration

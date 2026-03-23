@@ -33,7 +33,7 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 		return Configuration[key];
 	}
 
-	internal async Task<(DanceEvent[] nextEvents, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
+	internal async Task<(CalendarDetail calendar, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
 	{
 		(var remoteContentString, var headers, var cached) = await Fetch(urlString);
 		var cal = Calendar.Load(remoteContentString) ?? throw new Exception("Failed to load calendar at " + remoteContentString);
@@ -77,7 +77,16 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 			})
 			.ToArray();
 
-		return (nextEvents, headers, cached);
+		var calendar = new CalendarDetail
+		{
+			url = urlString,
+			name = cal.Properties["X-WR-CALNAME"]?.Value as string,
+			description = cal.Properties["X-WR-CALDESC"]?.Value as string,
+			timezone = cal.Properties["X-WR-TIMEZONE"]?.Value as string,
+			events = nextEvents
+		};
+
+		return (calendar, headers, cached);
 	}
 
 	private MemoryCacheEntryOptions FetchCacheOptions => new()
@@ -105,6 +114,15 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 			Cache.Set("headers%" + url, remoteContent.Headers, FetchCacheOptions);
 			return (result, remoteContent.Headers, false);
 		}
+	}
+
+	public class CalendarDetail
+	{
+		public required string url { get; set; }
+		public string? name { get; set; }
+		public string? description { get; set; }
+		public string? timezone { get; set; }
+		public DanceEvent[] events { get; set; } = [];
 	}
 
 	public class DanceSeries

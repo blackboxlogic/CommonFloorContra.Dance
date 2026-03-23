@@ -1,5 +1,5 @@
 // Loads the next event from a iCal calendar and populates details into elements on your page.
-// TODO: emit <script type="application/ld+json">
+// In carrd, script element stripped `data-` attributes. Use `style=hidden` on carrd embed element.
 
 /* Example usage:
 <script src="https://cfcdcalendarfunctionappservice.azurewebsites.net/api/LoadEventsScript"
