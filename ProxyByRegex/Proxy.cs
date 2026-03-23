@@ -61,10 +61,10 @@ public class Proxy : Base
 			|| uri.AbsoluteUri.Contains("ical", StringComparison.OrdinalIgnoreCase)
 			|| uri.AbsoluteUri.Contains("calendar", StringComparison.OrdinalIgnoreCase);
 
-		if (!isGoogleDoc && !isGoogleCalendar && !looksLikeOtherCalendar)
-		{
-			return new BadRequestObjectResult("Unsupported URL.");
-		}
+		//if (!isGoogleDoc && !isGoogleCalendar && !looksLikeOtherCalendar)
+		//{
+		//	return new BadRequestObjectResult("Unsupported URL.");
+		//}
 
 		(var remoteContentString, var headers, var cached) = await Fetch(url, useCache);
 
