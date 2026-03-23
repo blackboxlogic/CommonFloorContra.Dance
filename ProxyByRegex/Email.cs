@@ -41,7 +41,8 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 				Build = BuildTime + Configuration["Environment"]
 			};
 
-			(email.Events, _, _) = await GetNextEvents(email.CalendarUrl, [], 1);
+			(var cal, _, _) = await GetNextEvents(email.CalendarUrl, [], 1);
+			email.Events = cal.events;
 			email.FaviconUrl = await GetFaviconUrlFromWebsite(email.SeriesWebsite);
 			email.Subject = $"{email.SeriesName} ~ {DateTime.Now:MMMM} Events";
 
