@@ -8,7 +8,7 @@
         int day = dt.Day;
         string suffix = (day % 100 is 11 or 12 or 13) ? "th"
             : (day % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };
-        return dt.ToString("dddd, MMMM ") + day + $"<sup>{suffix}</sup>";
+        return dt.ToString("dddd, MMMM ") + day + $"<sup style='font-size: 0.65em;'>{suffix}</sup>";
     }
 
     // Like "3:20pm" or "3pm"
@@ -20,62 +20,48 @@
     }
 }
 
-<!-- build: @Model.Build -->
+
 <!DOCTYPE html>
 <html>
+<!-- build: @Model.Build -->
     <head>
         <title>@Model.Subject</title>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet" />
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-            body { font-family: 'Lora', serif; font-size: 14px; }
-            sup { font-size: 0.65em; }
-            .email-wrapper { border: 20px solid @Model.DarkColor; padding: 0px; background-color: @Model.LightColor; color: @Model.DarkColor; }
-            .header { color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px; }
-            .header a { color: @Model.LightColor; white-space: nowrap; }
-            .header h1 { font-weight: bold; }
-            .header h1 img { height: 1em; vertical-align: middle; margin-right: 8px; background-color: @Model.PopColor; border-radius: 9999px; padding: 4px; }
-            .divider { background: @Model.DarkColor; height: 16px; }
-            .event { margin-left: 10px; background-color: @Model.LightColor; color: @Model.DarkColor; padding: 16px; }
-            .event a { color: @Model.DarkColor;  white-space: nowrap; }
-            .event-title { font-weight: bold; }
-            .event-description { margin-left: 10px; }
-            .label { font-weight: bold; }
-            .footer { color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px; }
-            .footer a { color: @Model.LightColor;  white-space: nowrap; }
+            @@import url('https://fonts.googleapis.com/css2?family=Lora&display=swap');
         </style>
     </head>
-    <body>
-    <div class="email-wrapper">
-        <div class="header">
-            <h1><img src="@Model.FaviconUrl">@Model.Subject</h1>
-            Details about us, booking, volunteering, and all future events at <a href="@Model.SeriesWebsite">@Model.SeriesWebsite.Replace("https://","").Replace("http://","")</a>.
+    <body style="font-family: 'Lora', serif; font-size: 14px;">
+    <div class="email-wrapper" style="border: 20px solid @Model.DarkColor; padding: 0px; background-color: @Model.LightColor; color: @Model.DarkColor;">
+        <div class="header" style="color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px;">
+            <h1 style="font-weight: bold;"><img src="@Model.FaviconUrl" style="height: 1em; vertical-align: middle; margin-right: 8px; background-color: @Model.PopColor; border-radius: 9999px; padding: 4px;">@Model.Subject</h1>
+            Details about us, booking, volunteering, and all future events at <a href="@Model.SeriesWebsite" style="color: @Model.LightColor; white-space: nowrap;">@Model.SeriesWebsite.Replace("https://","").Replace("http://","")</a>.
             These are our <b>@DateTime.Now.ToString("MMMM, yyyy")</b> events:
             <br>
         </div>
         @foreach (var ev in Model.Events)
         {
-            <div class="divider"/>
-            <div class="event">
-                <h2 class="event-title">@Raw(FormatDate(ev.startLocal))</h2>
-                <h1 class="event-title">@ev.summary</h1>
+            <div class="divider" style="background: @Model.DarkColor; height: 16px;"> </div>
+            <div class="event" style="margin-left: 10px; background-color: @Model.LightColor; color: @Model.DarkColor; padding: 16px;">
+                <h2 class="event-title" style="font-weight: bold;">@Raw(FormatDate(ev.startLocal))</h2>
+                <h1 class="event-title" style="font-weight: bold;">@ev.summary</h1>
 
                 @{var endsSameDay = ev.startLocal.Date == ev.endLocal.Date || (ev.startLocal.Date.AddDays(1) == ev.endLocal.Date && ev.endLocal.Hour < 3);}
                 <div>
-                    <span class="label">When:</span>
+                    <span class="label" style="font-weight: bold;">When:</span>
                     @FormatTime(ev.startLocal) to @if(!endsSameDay) { @Raw(FormatDate(ev.endLocal))<text>,</text> } @FormatTime(ev.endLocal)
                 </div>
 
-                <div><span class="label">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)">@ev.location</a></div>
+                <div><span class="label">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)" style="color: @Model.DarkColor; white-space: nowrap;">@ev.location</a></div>
                 <div class="label">Description:</div>
-                <div class="event-description">@Raw(ev.description?.Replace("\n", "<br>"))</div>
+                <div class="event-description" style="margin-left: 10px;">@Raw(ev.description.Replace("\n", "<br>").Replace("<a ", $"<a style='color:{Model.DarkColor};white-space:nowrap;' "))</div>
             </div>
         }
-        <div class="footer">
-            This email was sent by a <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance">robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
+        <div class="footer" style="color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px;">
+            This email was sent by a <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance" style="color: @Model.LightColor;  white-space: nowrap;">robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
             <br><span>Get all <i>our events</i> on <i>your calendar</i> (they'll stay updated <i>by magic</i>):</span>
-            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
+            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)" style="color: @Model.LightColor;  white-space: nowrap;">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
         </div>
     </div>
     </body>
