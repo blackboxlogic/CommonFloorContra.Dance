@@ -11,7 +11,7 @@ A proposal for low-effort event publicity. You maintain your own public calendar
 * Email subscribe form
 * Performer Booking page (automatic list of events still seeking performers)
 * [Analytics](https://cfcd.goatcounter.com) (help predict event attendance)
-* Link [Other Dance Series]((https://github.com/blackboxlogic/CommonFloorContra.Dance/blob/main/ProxyByRegex/LoadOtherSeries.js))
+* Link [Other Dance Series](https://github.com/blackboxlogic/CommonFloorContra.Dance/blob/main/ProxyByRegex/LoadOtherSeries.js)
 * LD+json for SEO
 ## Automated Email
 * Setup an email subscription service (like mailchimp) with an email beamer feature (an email received is sent to all subscribers).
