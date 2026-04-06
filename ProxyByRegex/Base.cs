@@ -41,10 +41,11 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 		var end = start.AddMonths(months);
 		var events = cal.GetOccurrences<CalendarEvent>(start).TakeWhileBefore(end).ToArray();
 
-		// get X-WR-TIMEZONE
-		var defaultTimeZoneLocation = cal.Properties["X-WR-TIMEZONE"]!.Value as string;
-		//var defaultTimeZone = cal.TimeZones.First(tz => tz.Location == defaultTimeZoneLocation);
-		var defaultTzi = TimeZoneInfo.FindSystemTimeZoneById(defaultTimeZoneLocation!);
+		// get X-WR-TIMEZONE, fall back to UTC if not present
+		var defaultTimeZoneLocation = cal.Properties["X-WR-TIMEZONE"]?.Value as string;
+		var defaultTzi = defaultTimeZoneLocation is not null
+			? TimeZoneInfo.FindSystemTimeZoneById(defaultTimeZoneLocation)
+			: TimeZoneInfo.Utc;
 
 		var nextEvents = events
 			.OrderBy(e => e.Period.StartTime)
@@ -105,15 +106,14 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 
 		//Logger.LogInformation("Cache miss for {url}", url);
 
-		using (var httpClient = HttpClientFactory.CreateClient())
-		using (HttpResponseMessage remoteResponse = await httpClient.GetAsync(url))
-		using (HttpContent remoteContent = remoteResponse.Content)
-		{
-			var result = await remoteContent.ReadAsStringAsync() ?? throw new Exception("Received null from " + url);
-			Cache.Set("content%" + url, result, FetchCacheOptions);
-			Cache.Set("headers%" + url, remoteContent.Headers, FetchCacheOptions);
-			return (result, remoteContent.Headers, false);
-		}
+		using var httpClient = HttpClientFactory.CreateClient();
+		httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+		using HttpResponseMessage remoteResponse = await httpClient.GetAsync(url);
+		using HttpContent remoteContent = remoteResponse.Content;
+		var result = await remoteContent.ReadAsStringAsync() ?? throw new Exception("Received null from " + url);
+		Cache.Set("content%" + url, result, FetchCacheOptions);
+		Cache.Set("headers%" + url, remoteContent.Headers, FetchCacheOptions);
+		return (result, remoteContent.Headers, false);
 	}
 
 	public class CalendarDetail

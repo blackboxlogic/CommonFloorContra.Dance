@@ -1,6 +1,5 @@
 @using CalendarFunctions;
 @model Email.EmailModel
-
 @functions {
     // Like "Sunday, March 3rd"
     string FormatDate(DateTime dt)
@@ -19,8 +18,6 @@
             : dt.ToString("h:mmtt").ToLower();
     }
 }
-
-
 <!DOCTYPE html>
 <html>
 <!-- build: @Model.Build -->
@@ -61,7 +58,7 @@
         <div class="footer" style="color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px;">
             This email was sent by a <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance" style="color: @Model.LightColor;  white-space: nowrap;">robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
             <br><span>Get all <i>our events</i> on <i>your calendar</i> (they'll stay updated <i>by magic</i>):</span>
-            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)" style="color: @Model.LightColor;  white-space: nowrap;">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl">Outlook/Apple</a>.
+            <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)" style="color: @Model.LightColor;  white-space: nowrap;">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl" style="color: @Model.LightColor;  white-space: nowrap;">Outlook/Apple</a>.
         </div>
     </div>
     </body>

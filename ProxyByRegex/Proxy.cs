@@ -139,6 +139,11 @@ public class Proxy : Base
 		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
 		var result = JsonSerializer.Serialize(calender);
 
+		if (Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development")
+		{
+			req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+		}
+
 		var proxyResponse = new ContentResult
 		{
 			Content = result,
