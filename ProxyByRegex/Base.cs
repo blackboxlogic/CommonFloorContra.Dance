@@ -58,23 +58,44 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 					e.source.Summary?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true ||
 					e.source.Description?.Contains(contains, StringComparison.InvariantCultureIgnoreCase) == true)
 			)
-			.Select(e => new DanceEvent()
+			.Select(e =>
 			{
-				// TODO: Test "all day" events, multi-day events, zero-duration events, early morning, late night, night to morning.
-				start = new DateTimeOffset(e.period.StartTime.AsUtc),
-				end = new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
-				// If the event time is UTC (no TzId or TzId=="UTC"), convert to the calendar's default timezone
-				startLocal = string.IsNullOrEmpty(e.period.StartTime.TzId) || e.period.StartTime.TzId == "UTC"
-					? TimeZoneInfo.ConvertTimeFromUtc(e.period.StartTime.AsUtc, defaultTzi)
-					: e.period.StartTime.Value,
-				endLocal = string.IsNullOrEmpty(e.period.EffectiveEndTime?.TzId) || e.period.EffectiveEndTime?.TzId == "UTC"
-					? TimeZoneInfo.ConvertTimeFromUtc(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc, defaultTzi)
-					: e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
-				summary = Configuration["Environment"] == "PROD"
-					? e.source.Summary ?? ""
-					: $"[{Configuration["Environment"]}] " + e.source.Summary ?? "",
-				description = e.source.Description, // Might be HTML, might be plain text. Client should expect '\n' chars.
-				location = e.source.Location,
+				// All-day events (DTSTART;VALUE=DATE) are floating calendar dates with no time or
+				// timezone. Running them through UTC->local conversion shifts the date back a day for
+				// viewers west of UTC, so for all-day events we emit the date itself, unconverted.
+				var endTime = e.period.EffectiveEndTime ?? e.period.StartTime;
+				var isAllDay = !e.period.StartTime.HasTime;
+				var startDate = e.period.StartTime.Value.Date;
+				var endDate = endTime.Value.Date;
+
+				return new DanceEvent()
+				{
+					// For all-day events, anchor the instant to midnight in the calendar's timezone so it
+					// lands on the correct local date; otherwise use the event's true UTC instant.
+					start = isAllDay
+						? new DateTimeOffset(startDate, defaultTzi.GetUtcOffset(startDate))
+						: new DateTimeOffset(e.period.StartTime.AsUtc),
+					end = isAllDay
+						? new DateTimeOffset(endDate, defaultTzi.GetUtcOffset(endDate))
+						: new DateTimeOffset(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc),
+					// All-day -> the wall-clock date as-is. Otherwise, if the time is UTC (no TzId or
+					// TzId=="UTC"), convert to the calendar's default timezone.
+					startLocal = isAllDay
+						? startDate
+						: string.IsNullOrEmpty(e.period.StartTime.TzId) || e.period.StartTime.TzId == "UTC"
+							? TimeZoneInfo.ConvertTimeFromUtc(e.period.StartTime.AsUtc, defaultTzi)
+							: e.period.StartTime.Value,
+					endLocal = isAllDay
+						? endDate
+						: string.IsNullOrEmpty(e.period.EffectiveEndTime?.TzId) || e.period.EffectiveEndTime?.TzId == "UTC"
+							? TimeZoneInfo.ConvertTimeFromUtc(e.period.EffectiveEndTime?.AsUtc ?? e.period.StartTime.AsUtc, defaultTzi)
+							: e.period.EffectiveEndTime?.Value ?? e.period.StartTime.Value,
+					summary = Configuration["Environment"] == "PROD"
+						? e.source.Summary ?? ""
+						: $"[{Configuration["Environment"]}] " + e.source.Summary ?? "",
+					description = e.source.Description, // Might be HTML, might be plain text. Client should expect '\n' chars.
+					location = e.source.Location,
+				};
 			})
 			.ToArray();
 
