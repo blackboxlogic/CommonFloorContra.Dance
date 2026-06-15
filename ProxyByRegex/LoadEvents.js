@@ -29,14 +29,14 @@
 
 {
     const currentScript = document.currentScript;
-    const dateID = currentScript.dataset.dateId;
-    const timeID = currentScript.dataset.timeId;
-    const summaryID = currentScript.dataset.summaryId;
-    const descriptionID = currentScript.dataset.descriptionId;
+    const dateIDs = (currentScript.dataset.dateId ?? '').split(',').map(s =>s.trim()).filter(Boolean);
+    const timeIDs = (currentScript.dataset.timeId ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    const summaryIDs = (currentScript.dataset.summaryId ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    const descriptionIDs = (currentScript.dataset.descriptionId ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    const locationIDs = (currentScript.dataset.locationId ?? '').split(',').map(s => s.trim()).filter(Boolean);
     const icalLink = currentScript.dataset.icalLink;
     const months = currentScript.dataset.monthsAhead;
     const filter = currentScript.dataset.filter;
-    const locationID = currentScript.dataset.locationId;
     const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
     const listTbdID = currentScript.dataset.listTbdId;
     const emitSchema = currentScript.dataset.emitSchema;
@@ -51,9 +51,6 @@
         const response = await fetch(url);
         var dances = JSON.parse(await response.text());
 
-        if (dances.length == 0) return;
-        var nextDance = dances[0];
-
         const dateFormatter = new Intl.DateTimeFormat("en-US", {
             weekday: "long",
             year: "numeric",
@@ -67,45 +64,47 @@
             hour12: true
         });
 
-        if (dateID) document.getElementById(dateID).innerHTML = dateFormatter.format(Date.parse(nextDance.start));
-        if (timeID) document.getElementById(timeID).innerHTML = timeFormatter.format(Date.parse(nextDance.start));
-        if (summaryID) document.getElementById(summaryID).innerHTML = nextDance.summary;
-        if (descriptionID) {
-            if (forceDescriptionStyles) {
-                document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>")
-                    ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
-                    ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
-            } else {
-                document.getElementById(descriptionID).innerHTML = nextDance.description?.replaceAll("\n", "<br>");
+        for (var i = 0; i < dances.length; i++) {
+            if (i < dateIDs.length) document.getElementById(dateIDs[i]).innerHTML = dateFormatter.format(Date.parse(dances[i].start));
+            if (i < timeIDs.length) document.getElementById(timeIDs[i]).innerHTML = timeFormatter.format(Date.parse(dances[i].start));
+            if (i < summaryIDs.length) document.getElementById(summaryIDs[i]).innerHTML = dances[i].summary;
+            if (i < descriptionIDs.length) {
+                if (forceDescriptionStyles) {
+                    document.getElementById(descriptionIDs[i]).innerHTML = dances[i].description?.replaceAll("\n", "<br>")
+                        ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
+                        ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
+                } else {
+                    document.getElementById(descriptionIDs[i]).innerHTML = dances[i].description?.replaceAll("\n", "<br>");
+                }
             }
-        }
-        if (locationID) {
-            document.getElementById(locationID).innerHTML = nextDance.location;
-            document.getElementById(locationID).href = "https://maps.google.com/maps?hl=en&q=" + nextDance.location;
-        }
+            if (i < locationIDs.length) {
+                document.getElementById(locationIDs[i]).innerHTML = dances[i].location;
+                document.getElementById(locationIDs[i]).href = "https://maps.google.com/maps?hl=en&q=" + dances[i].location;
+            }
 
-        if (emitSchema) {
-            const schemaScript = document.createElement("script");
-            schemaScript.type = "application/ld+json";
-            schemaScript.textContent = JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "DanceEvent",
-                "name": nextDance.summary,
-                "startDate": nextDance.start,
-                "endDate": nextDance.end,
-                "location": {
-                    "@type": "Place",
-                    "name": nextDance.location,
-                    "address": nextDance.location
-                },
-                "description": nextDance.description?.replace(/<[^>]*>/g, '')
-            });
-            document.head.appendChild(schemaScript);
+            if (emitSchema) {
+                const schemaScript = document.createElement("script");
+                schemaScript.type = "application/ld+json";
+                schemaScript.textContent = JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "DanceEvent",
+                    "name": dances[i].summary,
+                    "startDate": dances[i].start,
+                    "endDate": dances[i].end,
+                    "location": {
+                        "@type": "Place",
+                        "name": dances[i].location,
+                        "address": dances[i].location
+                    },
+                    "description": dances[i].description?.replace(/<[^>]*>/g, '')
+                });
+                document.head.appendChild(schemaScript);
+            }
         }
 
         if (listTbdID) {
             dances = dances.filter(dance => dance.summary.toLowerCase().includes("tbd")); //.sort((a, b) => new Date(a.start) - new Date(b.start))
-            const list = document.getElementById("list01").children[0];
+            const list = document.getElementById(listTbdID).children[0];
             list.innerHTML = "";
             dances.forEach(dance => {
                 const paragraph = document.createElement("p");
