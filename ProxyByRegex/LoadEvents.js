@@ -65,8 +65,13 @@
         });
 
         for (var i = 0; i < dances.length; i++) {
-            if (i < dateIDs.length) document.getElementById(dateIDs[i]).innerHTML = dateFormatter.format(Date.parse(dances[i].start));
-            if (i < timeIDs.length) document.getElementById(timeIDs[i]).innerHTML = timeFormatter.format(Date.parse(dances[i].start));
+            // Use startLocal (a timezone-less wall-clock value from the server): Date.parse treats it
+            // as local time, so the date/time shown matches the calendar regardless of the viewer's
+            // timezone. Assumption: events should display in the calendar's local time, not the viewer's.
+            // NOTE: For ONLINE events (no fixed physical venue), we'd want to use dances[i].start
+            // instead, so each viewer sees the event converted to their own local timezone.
+            if (i < dateIDs.length) document.getElementById(dateIDs[i]).innerHTML = dateFormatter.format(Date.parse(dances[i].startLocal));
+            if (i < timeIDs.length) document.getElementById(timeIDs[i]).innerHTML = timeFormatter.format(Date.parse(dances[i].startLocal));
             if (i < summaryIDs.length) document.getElementById(summaryIDs[i]).innerHTML = dances[i].summary;
             if (i < descriptionIDs.length) {
                 if (forceDescriptionStyles) {
@@ -109,7 +114,7 @@
             dances.forEach(dance => {
                 const paragraph = document.createElement("p");
                 const listItem = document.createElement("li");
-                const summary = document.createTextNode(dateFormatter.format(Date.parse(dance.start)) + " ~ " + dance.summary);
+                const summary = document.createTextNode(dateFormatter.format(Date.parse(dance.startLocal)) + " ~ " + dance.summary);
                 listItem.appendChild(paragraph);
                 paragraph.appendChild(summary);
                 list.appendChild(listItem);
