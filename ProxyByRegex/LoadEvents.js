@@ -46,7 +46,10 @@
         const containsParam = filter ? "&contains=" + filter : "";
         const monthsParam = months ? "&months=" + months : "";
         const icalLinkParam = "url=" + icalLink
-        const url = "https://cfcdcalendarfunctionappservice.azurewebsites.net/api/GetNextEventsJSON?" + icalLinkParam + monthsParam + containsParam;
+        // Derive the API host from the URL that served this script, so the call automatically targets
+        // the same environment (prod, -test, or localhost) the script was loaded from.
+        const apiBase = new URL(currentScript.src).origin;
+        const url = apiBase + "/api/GetNextEventsJSON?" + icalLinkParam + monthsParam + containsParam;
 
         const response = await fetch(url);
         var dances = JSON.parse(await response.text());
