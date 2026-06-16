@@ -80,9 +80,9 @@
                 if (forceDescriptionStyles) {
                     document.getElementById(descriptionIDs[i]).innerHTML = dances[i].description?.replaceAll("\n", "<br>")
                         ?.replaceAll("<ul>", "<ul style='list-style: inside; margin-left: 20px'>")
-                        ?.replaceAll("<b>", "<b style='font-weight: bolder'>");
+                        ?.replaceAll("<b>", "<b style='font-weight: bolder'>") ?? "";
                 } else {
-                    document.getElementById(descriptionIDs[i]).innerHTML = dances[i].description?.replaceAll("\n", "<br>");
+                    document.getElementById(descriptionIDs[i]).innerHTML = dances[i].description?.replaceAll("\n", "<br>") ?? "";
                 }
             }
             if (i < locationIDs.length) {
@@ -104,7 +104,7 @@
                         "name": dances[i].location,
                         "address": dances[i].location
                     },
-                    "description": dances[i].description?.replace(/<[^>]*>/g, '')
+                    "description": dances[i].description?.replace(/<[^>]*>/g, '') ?? ""
                 });
                 document.head.appendChild(schemaScript);
             }
