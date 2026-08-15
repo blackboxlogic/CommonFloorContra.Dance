@@ -3,7 +3,7 @@ name: Build and deploy ProxyByRegex to Azure Function App - cfcdcalendarfunction
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'ProxyByRegex/**'
       - '.github/workflows/deploy-proxybyregex-test.yml'
