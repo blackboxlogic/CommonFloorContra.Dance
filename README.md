@@ -4,7 +4,7 @@ A proposal for low-effort event publicity. You maintain your own public calendar
 * Title or description **Should** include **keywords** for event type: (“contra” if it’s a contra dance)
 * Events **Must** have a **start/end time** and **location**
 * Description **Should** include dance **details like a flyer**: venue, cost, schedule, parking, policies, contact info, website. Use basic html formatting: lists, bold, font size.
-## Automated Website ([example](www.commonfloorcontra.dance))
+## Automated Website ([example](https://www.commonfloorcontra.dance))
 * Automatic [Next Event](https://github.com/blackboxlogic/CommonFloorContra.Dance/blob/main/ProxyByRegex/LoadEvents.js) section
 * Calendar of all future events
 * Links to add this dance calendar into dancer’s personal calendar
