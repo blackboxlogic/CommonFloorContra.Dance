@@ -48,7 +48,7 @@ public class Proxy : Base
 		ILogger log)
 	{
 		var url = req.Query["url"].FirstOrDefault();
-		var useCache = req.Query["cache"].FirstOrDefault()?.ToLower() != "false";
+		var useCache = !req.Headers.CacheControl.ToString().Contains("no-cache", StringComparison.OrdinalIgnoreCase);
 
 		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
 		{
@@ -71,6 +71,7 @@ public class Proxy : Base
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
 		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
 		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
+		req.HttpContext.Response.Headers.CacheControl = $"public, max-age={CacheMaxAgeSeconds}";
 
 		if (isGoogleDoc)
 		{
@@ -88,7 +89,7 @@ public class Proxy : Base
 		// CORS is failing on 3 of 5?
 		if(Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development")
 		{
-			req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+			req.HttpContext.Response.Headers.AccessControlAllowOrigin = "*";
 		}
 		
 		return proxyResponse;
@@ -133,15 +134,18 @@ public class Proxy : Base
 		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("months"));
 		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
-		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
+		var useCache = !req.Headers.CacheControl.ToString().Contains("no-cache", StringComparison.OrdinalIgnoreCase);
+
+		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months, useCache);
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
 		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
 		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
+		req.HttpContext.Response.Headers.CacheControl = $"public, max-age={CacheMaxAgeSeconds}";
 		var result = JsonSerializer.Serialize(calender);
 
 		if (Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development")
 		{
-			req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+			req.HttpContext.Response.Headers.AccessControlAllowOrigin = "*";
 		}
 
 		var proxyResponse = new ContentResult
@@ -163,10 +167,12 @@ public class Proxy : Base
 		var urlString = req.Query["url"].FirstOrDefault() ?? throw new ArgumentNullException("url");
 		var months = int.Parse(req.Query["months"].FirstOrDefault("12") ?? throw new ArgumentNullException("url"));
 		var containsFilters = req.Query["contains"].OfType<string>().Where(c => c != "").ToArray();
-		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months);
+		var useCache = !req.Headers.CacheControl.ToString().Contains("no-cache", StringComparison.OrdinalIgnoreCase);
+		(var calender, var headers, var cached) = await GetNextEvents(urlString, containsFilters, months, useCache);
 		req.HttpContext.Response.Headers.Append("X-Proxy-Cache", cached ? "HIT" : "MISS");
 		req.HttpContext.Response.Headers.Append("X-Build-Time", BuildTime);
 		req.HttpContext.Response.Headers.Append("X-Environment", GetConfigOrThrow("Environment"));
+		req.HttpContext.Response.Headers.CacheControl = $"public, max-age={CacheMaxAgeSeconds}";
 		var result = JsonSerializer.Serialize(calender.events);
 
 		var proxyResponse = new ContentResult

@@ -33,9 +33,9 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 		return Configuration[key];
 	}
 
-	internal async Task<(CalendarDetail calendar, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12)
+	internal async Task<(CalendarDetail calendar, HttpContentHeaders headers, bool cached)> GetNextEvents(string urlString, string[] containsFilters, int months = 12, bool useCache = true)
 	{
-		(var remoteContentString, var headers, var cached) = await Fetch(urlString);
+		(var remoteContentString, var headers, var cached) = await Fetch(urlString, useCache);
 		var cal = Calendar.Load(remoteContentString) ?? throw new Exception("Failed to load calendar at " + remoteContentString);
 		var start = CalDateTime.UtcNow;
 		var end = start.AddMonths(months);
@@ -111,9 +111,11 @@ public abstract class Base(IHttpClientFactory httpClientFactory, ILogger<Proxy> 
 		return (calendar, headers, cached);
 	}
 
+	internal int CacheMaxAgeSeconds => (int)(double.Parse(Configuration["CacheDurationMinutes"] ?? "10") * 60);
+
 	private MemoryCacheEntryOptions FetchCacheOptions => new()
 	{
-		AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(double.Parse(Configuration["CacheDurationMinutes"] ?? "10"))
+		AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(CacheMaxAgeSeconds)
 	};
 
 	internal async Task<(string content, HttpContentHeaders headers, bool cached)> Fetch(string url, bool useCache = true)
