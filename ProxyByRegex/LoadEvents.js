@@ -97,8 +97,8 @@
                     "@context": "https://schema.org",
                     "@type": "DanceEvent",
                     "name": dances[i].summary,
-                    "startDate": dances[i].start,
-                    "endDate": dances[i].end,
+                    "startDate": dances[i].startLocal,
+                    "endDate": dances[i].endLocal,
                     "location": {
                         "@type": "Place",
                         "name": dances[i].location,

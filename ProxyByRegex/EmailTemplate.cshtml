@@ -51,12 +51,12 @@
                 </div>
 
                 <div><span class="label" style="font-weight: bold;">Where:</span> <a href="https://www.google.com/maps/search/?api=1&query=@System.Net.WebUtility.UrlEncode(ev.location)" style="color: @Model.DarkColor; white-space: nowrap;">@ev.location</a></div>
-                <div class="label" style="font-weight: bold;">Description:</div>
+                <div class="label" style="font-weight: bold;">Details:</div>
                 <div class="event-description" style="margin-left: 10px;">@Raw(ev.description.Replace("\n", "<br>").Replace("<a ", $"<a style='color:{Model.DarkColor};white-space:nowrap;' "))</div>
             </div>
         }
         <div class="footer" style="color: @Model.LightColor; background-color: @Model.DarkColor; padding: 16px; font-size: 14px;">
-            This email was sent by a <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance" style="color: @Model.LightColor;  white-space: nowrap;">robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
+            Email sent by an <a href="https://github.com/blackboxlogic/CommonFloorContra.Dance" style="color: @Model.LightColor;  white-space: nowrap;">unsupervised robot</a> (not self aware, no reasoning skill). Problem? Suggestion? Reply and a human will see it.
             <br><span>Get all <i>our events</i> on <i>your calendar</i> (they'll stay updated <i>by magic</i>):</span>
             <a href="https://calendar.google.com/calendar/render?cid=@System.Net.WebUtility.UrlEncode(Model.CalendarUrl)" style="color: @Model.LightColor;  white-space: nowrap;">Google</a>&nbsp;or&nbsp;<a href="@Model.CalendarUrl" style="color: @Model.LightColor;  white-space: nowrap;">Outlook/Apple</a>.
         </div>
