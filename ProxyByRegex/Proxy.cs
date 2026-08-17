@@ -3,7 +3,6 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Cors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -99,23 +98,21 @@ public class Proxy : Base
 	public IActionResult LoadEventsScript(
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
-		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadEvents.js");
-		var content = File.ReadAllText(scriptPath);
-
-		return new ContentResult
-		{
-			Content = content,
-			ContentType = "application/javascript; charset=utf-8",
-			StatusCode = (int)HttpStatusCode.OK
-		};
+		return LoadFile("LoadEvents.js", req);
 	}
 
 	[Function("LoadOtherSeriesScript")]
 	public IActionResult LoadOtherSeriesScript(
-	[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+		[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
 	{
-		var scriptPath = Path.Combine(AppContext.BaseDirectory, "LoadOtherSeries.js");
-		var content = File.ReadAllText(scriptPath);
+		return LoadFile("LoadOtherSeries.js", req);
+	}
+
+	private IActionResult LoadFile(string fileName, HttpRequest req)
+	{
+		var content = Cache.GetOrCreate("file%" + fileName,
+			_ => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, fileName)))!;
+		req.HttpContext.Response.Headers.CacheControl = "public, max-age=600";
 
 		return new ContentResult
 		{
