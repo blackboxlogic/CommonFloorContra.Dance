@@ -13,8 +13,8 @@ namespace CalendarFunctions;
 
 // TODO
 // Set for multiple dance series (put config in json list, include email template maybe as a link hosted on their site)
-// I guess their site could host their config file if it was encrypted?
-// Filter: CANCELLED for example
+// I guess their site could host their config file if it was encrypted? If I'm always sending from my address, then there's no secrets.
+// Add "all other maine events" to bottom of email?
 
 // Schedule a preview event email sent to me with a link to send the email to all mailchimp subscribers.
 // https://mailchimp.com/help/use-email-beamer-to-create-a-campaign/
@@ -29,7 +29,9 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 		var email = new EmailModel
 		{
 			SeriesName = "Kennebec Contra Dance",
+			Subject = $"Kennebec Contra Dance ~ Upcoming Events",
 			SeriesWebsite = "https://upcoming.kennebec-contra.org",
+			FaviconUrl = "https://upcoming.kennebec-contra.org/assets/images/favicon.png",
 			CalendarUrl = "https://calendar.google.com/calendar/ical/365bea0a69c61ed1419ea490097d7311c8461a001f47cfebb28b0891e3ecbb5c%40group.calendar.google.com/public/basic.ics",
 			LightColor = "#cfe2f3",
 			DarkColor = "#294d78",
@@ -43,18 +45,36 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 
 		(var cal, _, _) = await GetNextEvents(email.CalendarUrl, [], 1);
 		email.Events = cal.events;
-		email.FaviconUrl = await GetFaviconUrlFromWebsite(email.SeriesWebsite);
-		email.Subject = $"{email.SeriesName} ~ Upcoming Events";
 
 		if (email.Events.Length > 0)
 		{
-			await SendEmailFromGmail(email);
+			await SendEventsEmailFromGmail(email);
 		}
 		else
 		{
 			Logger.LogInformation($"No events to email in {DateTime.Now:MMMM}.");
 		}
 	}
+
+	// At Noon-oh-five on the 1st Sunday of the month.
+	//[Function("SendCFCDVolunteerEmailTimer")]
+	//public async Task SendCFCDVolunteerEmailTimer([TimerTrigger("0 05 17 1-7 * SUN")] TimerInfo myTimer)
+	//{
+	//	var email = new EmailModel
+	//	{
+	//		SeriesName = GetConfigOrThrow("SeriesName"),
+	//		SeriesWebsite = GetConfigOrThrow("SeriesWebsite"),
+	//		CalendarUrl = GetConfigOrThrow("SeriesCalendarUrl"),
+	//		LightColor = GetConfigOrNull("SeriesLightColor") ?? "#FFFFFF",
+	//		DarkColor = GetConfigOrNull("SeriesDarkColor") ?? "#000000",
+	//		PopColor = GetConfigOrNull("SeriesPopColor") ?? "#333333",
+	//		ToAddress = GetConfigOrThrow("SeriesEmailDestination"),
+	//		FromAddress = GetConfigOrThrow("SeriesGmailSender"),
+	//		FromAddressAppUser = GetConfigOrThrow("SeriesGmailSenderUser"),
+	//		FromAddressAppPassword = GetConfigOrThrow("SeriesGmailSenderAppPassword"),
+	//		Build = BuildTime + Configuration["Environment"]
+	//	};
+	//}
 
 	// At Noon-oh-five every 1st day of the month.
 	[Function("SendCFCDEmailTimer")]
@@ -84,7 +104,7 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 
 			if (email.Events.Length > 0)
 			{
-				await SendEmailFromGmail(email);
+				await SendEventsEmailFromGmail(email);
 			}
 			else
 			{
@@ -97,7 +117,7 @@ public class Email(IHttpClientFactory httpClientFactory, ILogger<Proxy> logger, 
 		}
 	}
 
-	private async Task SendEmailFromGmail(EmailModel email)
+	private async Task SendEventsEmailFromGmail(EmailModel email)
 	{
 		var textBody = GenerateTextBody(email);
 		var textView = AlternateView.CreateAlternateViewFromString(textBody, Encoding.UTF8, "text/plain");

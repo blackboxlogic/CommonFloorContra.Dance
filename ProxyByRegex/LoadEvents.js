@@ -10,7 +10,7 @@
   data-time-id="next-dance-time"
   data-summary-id="next-dance-title"
   data-description-id="next-dance-description"
-  data-location-id="next-dance-location" // Should be a <a href> tag, will get a google maps link and text.
+  data-location-id="next-dance-location" // Any tag, gets an <a> with the venue text and a google maps link nested inside it.
   data-list-tbd-id="tbd-list"> // Should be a <div> with a single <ul> or <ol> in it, will get filled with <li> for each "TBD" event (has "tbd" in the description, looking to hire caller/band).
   // Configuration
   data-months-ahead="13" // How far ahead in time to look (Default is 12)
@@ -21,7 +21,7 @@
 <div>
   <h2 id="next-dance-title">Loading title…</h2>
   <h2 id="next-dance-date" style="display: inline">Loading date…</h2> at <h2 id="next-dance-time" style="display: inline">Loading time…</h2>
-  <h3> Venue: <a href="" id="next-dance-location">Loading venue…</a></h3>
+  <h3> Venue: <span id="next-dance-location">Loading venue…</span></h3>
   <h3 id="next-dance-description">Loading description…</h3>
   <div id="tbd-list">We're booking performers for these dances:<ul></ul></div>
 </div>
@@ -86,8 +86,15 @@
                 }
             }
             if (i < locationIDs.length) {
-                document.getElementById(locationIDs[i]).innerHTML = dances[i].location;
-                document.getElementById(locationIDs[i]).href = "https://maps.google.com/maps?hl=en&q=" + dances[i].location;
+                // If locationElement is an <a>, udpate it, otherwise build the link and nest it.
+                const locationElement = document.getElementById(locationIDs[i]);
+                const locationLink = locationElement.tagName === "A" ? locationElement : document.createElement("a");
+                locationLink.href = "https://maps.google.com/maps?hl=en&q=" + encodeURIComponent(dances[i].location);
+                locationLink.textContent = dances[i].location;
+                if (locationLink !== locationElement) {
+                    locationElement.innerHTML = "";
+                    locationElement.appendChild(locationLink);
+                }
             }
 
             if (emitSchema) {
