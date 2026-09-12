@@ -28,6 +28,8 @@
 */
 
 {
+    try {
+
     const currentScript = document.currentScript;
     const dateIDs = (currentScript.dataset.dateId ?? '').split(',').map(s =>s.trim()).filter(Boolean);
     const timeIDs = (currentScript.dataset.timeId ?? '').split(',').map(s => s.trim()).filter(Boolean);
@@ -131,6 +133,10 @@
             });
         }
     })();
+
+} catch (e){
+document.getElementById(’text16’).children[0].innerHTML = e.name + e.message;
+}
 }
 
 //# sourceURL=LoadEvents.js
