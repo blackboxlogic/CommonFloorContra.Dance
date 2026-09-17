@@ -42,9 +42,6 @@
     const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
     const listTbdID = currentScript.dataset.listTbdId;
     const emitSchema = currentScript.dataset.emitSchema;
-    } catch (e) {
-        document.getElementById('text16').children[0].innerHTML = e.name + e.message;
-    }
 
     (async function () {
         try {
@@ -136,9 +133,13 @@
             });
         }
         } catch (e) {
-            document.getElementById('text16').children[0].innerHTML = e.name + e.message;
+            document.getElementById('text16').children[0].innerHTML = e.name + ' ' + e.message + ' ' + e.stack;
         }
     })();
+
+    } catch (e) {
+        document.getElementById('text16').children[0].innerHTML = e.name + ' ' + e.message + ' ' + e.stack;
+    }
 }
 
 //# sourceURL=LoadEvents.js
