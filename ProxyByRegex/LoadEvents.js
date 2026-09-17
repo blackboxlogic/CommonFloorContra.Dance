@@ -133,12 +133,16 @@
             });
         }
         } catch (e) {
-            document.getElementById('text16').children[0].innerHTML = e.name + ' ' + e.message + ' ' + e.stack;
+            var et = document.createElement("div");
+            et.textContent = e.name + ' ' + e.message + ' ' + e.stack;
+            document.body.appendChild(x); 
         }
     })();
 
     } catch (e) {
-        document.getElementById('text16').children[0].innerHTML = e.name + ' ' + e.message + ' ' + e.stack;
+        var et = document.createElement("div");
+        et.textContent = e.name + ' ' + e.message + ' ' + e.stack;
+        document.body.appendChild(x); 
     }
 }
 
