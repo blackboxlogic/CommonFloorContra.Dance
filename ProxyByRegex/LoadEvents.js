@@ -42,9 +42,12 @@
     const forceDescriptionStyles = currentScript.dataset.forceDescriptionStyles;
     const listTbdID = currentScript.dataset.listTbdId;
     const emitSchema = currentScript.dataset.emitSchema;
+    } catch (e) {
+        document.getElementById('text16').children[0].innerHTML = e.name + e.message;
+    }
 
     (async function () {
-
+        try {
         const containsParam = filter ? "&contains=" + filter : "";
         const monthsParam = months ? "&months=" + months : "";
         const icalLinkParam = "url=" + icalLink
@@ -132,11 +135,10 @@
                 list.appendChild(listItem);
             });
         }
+        } catch (e) {
+            document.getElementById('text16').children[0].innerHTML = e.name + e.message;
+        }
     })();
-
-} catch (e){
-document.getElementById('text16').children[0].innerHTML = e.name + e.message;
-}
 }
 
 //# sourceURL=LoadEvents.js
