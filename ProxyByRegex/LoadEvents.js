@@ -135,7 +135,7 @@
     })();
 
 } catch (e){
-document.getElementById(’text16’).children[0].innerHTML = e.name + e.message;
+document.getElementById('text16').children[0].innerHTML = e.name + e.message;
 }
 }
 
